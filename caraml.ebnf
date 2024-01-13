@@ -1,0 +1,130 @@
+module			::= "module" alnum-identifier "where" toplevel-decls "end"
+
+toplevel-decls		::= { toplevel-decl }
+
+toplevel-decl		::= value-decl
+			| type-decl
+			| datatype-decl
+
+value-decl		::= "val" alnum-identifier '=' expr ';'
+
+type-decl		::= "type" alnum-identifier '=' type-exp ';'
+
+datatype-decl		::= "datatype" alnum-identifier '=' constructor-list ';'
+constructor-list 	::= constructor { '|' constructor }
+constructor		::= alnum-identifier "of" type-exp
+
+expr			::= pattern-list
+			| let-binding "in" expr
+			| "if" expr "then" expr "else" expr
+			| match-expression
+			| function-expression
+			| "raise" expr
+			| "try" expr "with" match-expression
+
+let-binding		::= "let" pattern '=' expr "in" expr
+
+match-expression	::= "match" expr "with" match-clauses "end"
+match-clauses		::= match-clause { '|' match-clause }
+match-clause		::= pattern "->" expr
+
+function-expression 	::= "fun" pattern "->" expr
+
+type-exp		::= type-atom
+			| type-atom "->" type-exp
+
+type-atom		::= alnum-identifier
+			| '(' type-exp ')'
+			| type-atom alnum-identifier
+
+pattern			::= pattern-constructor
+			| identifier-pattern
+			| literal-pattern
+			| wildcard-pattern
+			| '(' pattern-list ')'
+
+pattern-constructor 	::= con-identifier pattern-list
+
+pattern-list		::= pattern-single { '|' pattern-single }
+pattern-single		::= identifier infix-expr
+
+identifier-pattern 	::= alnum-identifier
+
+literal-pattern		::= integer-literal
+			| string-literal
+			| character-literal
+
+wildcard-pattern	::= '_'
+
+infix-expr		::= primary-expr { infix-operator primary-expr }
+
+primay-expr		::= identifier
+			| literal-value
+			| con-identifier primary-expr
+			| '(' primary-expr ')'
+			| prefix-operator primary-expr
+
+
+prefix-operator		::= symb-identifier
+infix-operator		::= symb-identifier
+
+symb-identifier		::= ( punctuation | letter ) { punctuation | letter | digit }
+alnum-identifier 	::= letter { letter | digit | "'" | '_' }
+
+con-identifier	        ::= con-idenetifier-init { con-identifier-init }
+con-identifier-init     ::= upper-case { letter | digit | "'" | '_' }
+
+
+literal-value		::= integer-literal
+			| string-literal
+			| character-literal
+			| float-literal
+
+float-literal		::= decimal-integer '.' decimal-integer
+
+
+character-literal	::= '#"' ( c-escape-sequence | no-newline ) '"'
+c-escape-sequence	::= '\' ( hex-escape | unicode-escape | c-escape-chars )
+hex-escape		::= 'x' hex-digit [ hex-digit ]
+unicode-escape		::= "U+" hex-digit [ hex-digit [ hex-digit [ hex-digit ] ] ] 
+c-escape-chars		::=  'a' | 'b' 
+			| 'e' | 'f' 
+			| 'n' | 'r' 
+			| 't' | 'v' 
+			| "'" | '"' 
+
+
+string-literal		::= '"' { no-double-quote } '"'
+
+integer-literal		::= decimal-integer
+			| octal-integer
+			| hexadecimal-integer
+			| decimal-integer
+
+binary-integer		::= binary-digit { binary-digit } 'B'
+octal-integer		::= octal-digit { octal-digit } 'O'
+hexadecimal-integer	::= hexadecimal-digit { hexadecimal-digit } 'H'
+decimal-integer		::= decimal-digit { decimal-digit }
+
+binary-digit		::= '0' | '1'
+octal-digit		::= '0' | '1' | ... | '7'
+hexadecimal-digit	::= decimal-digit | 'A' | ... | 'F' | 'a' | ... | 'f'
+decimal-digit		::= '0' | '1' | ... | '8' | '9'
+
+
+punctuation		::= '!' | '"' | '#' | '$' 
+			| '%' | '&' | ''' | '(' | ')' 
+			| '*' | '+' | ',' | '-' | '.' 
+			| '/' | ':' | ';' | '<' | '=' 
+			| '>' | '?' | '@' | '[' | '\' 
+			| ']' | '^' | '_' | '`' | '{' 
+			| '|' | '}' | '~'
+
+letter			::= lower-case | upper-case
+lower-case		::= 'a' | 'b' | ... | 'y' | 'z'
+upper-case		::= 'A' | 'B' | ... | 'Y' | 'Z' 
+
+
+no-double-quote		::= ? any-UTF8-character-except-double-quote ?
+no-newline 		::= ? any-UTF8-character-except-newline ?
+any-char   		::= ? any-UTF8-character ?
