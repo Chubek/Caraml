@@ -1,0 +1,124 @@
+Module               <- "module" AlnumIdentifier "where" ToplevelDecls "end"
+
+ToplevelDecls        <- ToplevelDecl*
+
+ToplevelDecl         <- ValueDecl
+                     / TypeDecl
+                     / DatatypeDecl
+                     / InfixDecl
+
+ValueDecl            <- "val" AlnumIdentifier '=' Expr ';'
+
+TypeDecl             <- "type" AlnumIdentifier '=' TypeExp ';'
+
+DatatypeDecl         <- "datatype" AlnumIdentifier '=' ConstructorList ';'
+ConstructorList      <- Constructor ("|" Constructor)*
+Constructor          <- ConIdentifier "of" TypeExp
+
+Expr                 <- PatternList
+                     / LetBinding "in" Expr
+                     / "if" Expr "then" Expr "else" Expr
+                     / MatchExpression
+                     / FunctionExpression
+                     / "raise" Expr
+                     / "try" Expr "with" MatchExpression
+
+LetBinding           <- "let" Pattern '=' Expr "in" Expr
+
+InfixDecl            <- "infix" DecimalDigit? Identifier? InfixOperator
+                     / "infixr" DecimalDigit? Identifier? InfixOperator
+                     / "nonfix" InfixOperator
+
+MatchExpression      <- "match" Expr "with" MatchClauses "end"
+MatchClauses         <- MatchClause ("|" MatchClause)*
+MatchClause          <- Pattern "->" Expr
+
+FunctionExpression   <- "fun" Pattern "->" Expr
+
+TypeExp              <- TypeAtom
+                     / TypeAtom "->" TypeExp
+
+TypeAtom             <- AlnumIdentifier
+                     / '(' TypeExp ')'
+                     / TypeAtom AlnumIdentifier
+
+Pattern              <- PatternConstructor
+                     / IdentifierPattern
+                     / LiteralPattern
+                     / WildcardPattern
+                     / '(' PatternList ')'
+
+PatternConstructor   <- ConIdentifier PatternList
+
+PatternList          <- PatternSingle ("|" PatternSingle)*
+PatternSingle        <- Identifier InfixExpr
+
+IdentifierPattern    <- AlnumIdentifier / LongIdentifier
+
+LiteralPattern       <- IntegerLiteral
+                     / StringLiteral
+                     / CharacterLiteral
+
+WildcardPattern      <- '_'
+
+InfixExpr            <- PrimaryExpr (InfixOperator PrimaryExpr)*
+
+PrimaryExpr          <- Identifier
+                     / LiteralValue
+                     / ConIdentifier PrimaryExpr
+                     / '(' PrimaryExpr ')'
+                     / PrefixOperator PrimaryExpr
+
+PrefixOperator       <- SymbIdentifier
+InfixOperator        <- "op"? SymbIdentifier
+
+Identifier           <- AlnumIdentifier
+                     / SymbIdentifier
+                     / LongIdentifier
+
+LongIdentifier       <- AlnumIdentifier ('.' AlnumIdentifier)*
+SymbIdentifier       <- (Punctuation / Letter) (Punctuation / Letter / Digit)*
+AlnumIdentifier      <- Letter (Letter / Digit / "'" / '_')*
+
+ConIdentifier        <- [A-Z] (Letter / Digit / "'" / '_')*
+
+LiteralValue         <- IntegerLiteral
+                     / StringLiteral
+                     / CharacterLiteral
+                     / FloatLiteral
+
+FloatLiteral         <- DecimalInteger '.' DecimalInteger
+
+CharacterLiteral     <- '#"' (CEscapeSequence / NoNewline) '"'
+CEscapeSequence      <- '\' (HexEscape / UnicodeEscape / CEscapeChars)
+HexEscape            <- 'x' HexDigit HexDigit?
+UnicodeEscape        <- "U+" HexDigit HexDigit? HexDigit? HexDigit?
+CEscapeChars         <- 'a' / 'b' / 'e' / 'f' / 'n' / 'r' / 't' / 'v' / "'" / '"'
+
+StringLiteral        <- '"' NoDoubleQuote* '"'
+
+IntegerLiteral       <- DecimalInteger
+                     / OctalInteger
+                     / HexadecimalInteger
+                     / BinaryInteger
+
+BinaryInteger        <- BinaryDigit+ 'B'
+OctalInteger         <- OctalDigit+ 'O'
+HexadecimalInteger   <- HexadecimalDigit+ 'H'
+DecimalInteger       <- DecimalDigit+
+
+BinaryDigit          <- '0' / '1'
+OctalDigit           <- [0-7]
+HexadecimalDigit     <- [0-9A-Fa-f]
+DecimalDigit         <- [0-9]
+
+Punctuation          <- [!"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~]
+
+Letter               <- LowerCase / UpperCase
+LowerCase            <- [a-z]
+UpperCase            <- [A-Z]
+
+NoDoubleQuote        <- !'"'
+NoNewline            <- !"\n"
+AnyChar              <- .
+
