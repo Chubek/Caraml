@@ -1,3 +1,5 @@
+Program		     <- ( Module / Comment )* EOF
+
 Module               <- "module" AlnumIdentifier "where" ToplevelDecls "end"
 
 ToplevelDecls        <- ToplevelDecl*
@@ -38,9 +40,7 @@ FunctionExpression   <- "fun" Pattern "->" Expr
 TypeExp              <- TypeAtom
                      / TypeAtom "->" TypeExp
 
-TypeAtom             <- AlnumIdentifier
-                     / '(' TypeExp ')'
-                     / TypeAtom AlnumIdentifier
+TypeAtom             <- AlnumIdentifier ( '(' TypeExp ')' )*
 
 Pattern              <- PatternConstructor
                      / IdentifierPattern
@@ -77,10 +77,10 @@ Identifier           <- AlnumIdentifier
                      / LongIdentifier
 
 LongIdentifier       <- AlnumIdentifier ('.' AlnumIdentifier)*
-SymbIdentifier       <- (Punctuation / Letter) (Punctuation / Letter / Digit)*
-AlnumIdentifier      <- Letter (Letter / Digit / "'" / '_')*
+SymbIdentifier       <- AlnumIdentifier / Punctuation+
+AlnumIdentifier      <- [a-zA-Z_][a-zA-Z0-9\']*
 
-ConIdentifier        <- [A-Z] (Letter / Digit / "'" / '_')*
+ConIdentifier        <- ( [A-Z][A-Za-z_\']* )+
 
 LiteralValue         <- IntegerLiteral
                      / StringLiteral
@@ -89,13 +89,22 @@ LiteralValue         <- IntegerLiteral
 
 FloatLiteral         <- DecimalInteger '.' DecimalInteger
 
-CharacterLiteral     <- '#"' (CEscapeSequence / NoNewline) '"'
-CEscapeSequence      <- '\' (HexEscape / UnicodeEscape / CEscapeChars)
-HexEscape            <- 'x' HexDigit HexDigit?
-UnicodeEscape        <- "U+" HexDigit HexDigit? HexDigit? HexDigit?
-CEscapeChars         <- 'a' / 'b' / 'e' / 'f' / 'n' / 'r' / 't' / 'v' / "'" / '"'
+CharacterLiteral     <- '#"' (CEscapeSequence / . ) '"'
+CEscapeSequence      <- "\\" ( HexEscape / UnicodeEscape / CEscapeChars )
+HexEscape            <- 'x' HexadecimalDigit HexadecimalDigit?
+UnicodeEscape        <- "U+" HexadecimalDigit HexadecimalDigit? HexadecimalDigit? HexadecimalDigit?
+CEscapeChars         <- "a" 
+		     / "b" 
+		     / "e" 
+		     / "f" 
+		     / "n" 
+		     / "r" 
+		     / "t" 
+		     / "v" 
+		     / "'" 
+		     / '"'
 
-StringLiteral        <- '"' NoDoubleQuote* '"'
+StringLiteral        <- '"' ( !'"' )* '"'
 
 IntegerLiteral       <- DecimalInteger
                      / OctalInteger
@@ -107,18 +116,44 @@ OctalInteger         <- OctalDigit+ 'O'
 HexadecimalInteger   <- HexadecimalDigit+ 'H'
 DecimalInteger       <- DecimalDigit+
 
-BinaryDigit          <- '0' / '1'
+BinaryDigit          <- [0-1]
 OctalDigit           <- [0-7]
 HexadecimalDigit     <- [0-9A-Fa-f]
 DecimalDigit         <- [0-9]
 
-Punctuation          <- [!"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~]
+Punctuation	     <- "!"
+		     / '"'
+		     / "#"
+		     / "$"
+		     / "%"
+		     / "&"
+		     / "'"
+	 	     / "("
+		     / ")"
+		     / "*"
+		     / "+"
+		     / ","
+		     / "-"
+		     / "."
+		     / "/"
+		     / ":"
+		     / ";"
+		     / "<"
+		     / "="
+		     / ">"
+		     / "?"
+		     / "@"
+		     / "["
+		     / "\\"
+		     / "]"
+		     / "^"
+		     / "_"
+		     / "`"
+		     / "{"
+		     / "|"
+		     / "}"
+		     / "~"
 
-Letter               <- LowerCase / UpperCase
-LowerCase            <- [a-z]
-UpperCase            <- [A-Z]
+Comment		     <- "(*" ( !"*)" )* "*)"
 
-NoDoubleQuote        <- !'"'
-NoNewline            <- !"\n"
-AnyChar              <- .
-
+EOF		     <- !.
