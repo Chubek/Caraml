@@ -1,130 +1,134 @@
-module			::= "module" alnum-identifier "where" toplevel-decls "end"
+module               ::= "module" alnum-identifier "where" toplevel-decls "end"
 
-toplevel-decls		::= { toplevel-decl }
+toplevel-decls       ::= { toplevel-decl }
 
-toplevel-decl		::= value-decl
-			| type-decl
-			| datatype-decl
+toplevel-decl        ::= value-decl
+                     | type-decl
+                     | datatype-decl
+		     | infix-decl
 
-value-decl		::= "val" alnum-identifier '=' expr ';'
+value-decl           ::= "val" alnum-identifier '=' expr ';'
 
-type-decl		::= "type" alnum-identifier '=' type-exp ';'
+type-decl            ::= "type" alnum-identifier '=' type-exp ';'
 
-datatype-decl		::= "datatype" alnum-identifier '=' constructor-list ';'
-constructor-list 	::= constructor { '|' constructor }
-constructor		::= alnum-identifier "of" type-exp
+datatype-decl        ::= "datatype" alnum-identifier '=' constructor-list ';'
+constructor-list     ::= constructor { '|' constructor }
+constructor          ::= con-identifier "of" type-exp
 
-expr			::= pattern-list
-			| let-binding "in" expr
-			| "if" expr "then" expr "else" expr
-			| match-expression
-			| function-expression
-			| "raise" expr
-			| "try" expr "with" match-expression
+expr                 ::= pattern-list
+                     | let-binding "in" expr
+                     | "if" expr "then" expr "else" expr
+                     | match-expression
+                     | function-expression
+                     | "raise" expr
+                     | "try" expr "with" match-expression
 
-let-binding		::= "let" pattern '=' expr "in" expr
+let-binding          ::= "let" pattern '=' expr "in" expr
 
-match-expression	::= "match" expr "with" match-clauses "end"
-match-clauses		::= match-clause { '|' match-clause }
-match-clause		::= pattern "->" expr
+infix-decl	     ::= "infix" [ decimal-digit ] [ identifier ] infix-operator
+		     | "infixr" [ decimal-digit ] [ identifier ] infix-operator
+		     | "nonfix" infix-operator
 
-function-expression 	::= "fun" pattern "->" expr
+match-expression     ::= "match" expr "with" match-clauses "end"
+match-clauses        ::= match-clause { '|' match-clause }
+match-clause         ::= pattern "->" expr
 
-type-exp		::= type-atom
-			| type-atom "->" type-exp
+function-expression  ::= "fun" pattern "->" expr
 
-type-atom		::= alnum-identifier
-			| '(' type-exp ')'
-			| type-atom alnum-identifier
+type-exp             ::= type-atom
+                     | type-atom "->" type-exp
 
-pattern			::= pattern-constructor
-			| identifier-pattern
-			| literal-pattern
-			| wildcard-pattern
-			| '(' pattern-list ')'
+type-atom            ::= alnum-identifier
+                     | '(' type-exp ')'
+                     | type-atom alnum-identifier
 
-pattern-constructor 	::= con-identifier pattern-list
+pattern              ::= pattern-constructor
+                     | identifier-pattern
+                     | literal-pattern
+                     | wildcard-pattern
+                     | '(' pattern-list ')'
 
-pattern-list		::= pattern-single { '|' pattern-single }
-pattern-single		::= identifier infix-expr
+pattern-constructor  ::= con-identifier pattern-list
 
-identifier-pattern 	::= alnum-identifier
+pattern-list         ::= pattern-single { '|' pattern-single }
+pattern-single       ::= identifier infix-expr
 
-literal-pattern		::= integer-literal
-			| string-literal
-			| character-literal
+identifier-pattern   ::= alnum-identifier | long-identifier
 
-wildcard-pattern	::= '_'
+literal-pattern      ::= integer-literal
+                     | string-literal
+                     | character-literal
 
-infix-expr		::= primary-expr { infix-operator primary-expr }
+wildcard-pattern     ::= '_'
 
-primay-expr		::= identifier
-			| literal-value
-			| con-identifier primary-expr
-			| '(' primary-expr ')'
-			| prefix-operator primary-expr
+infix-expr           ::= primary-expr { infix-operator primary-expr }
 
+primary-expr         ::= identifier
+                     | literal-value
+                     | con-identifier primary-expr
+                     | '(' primary-expr ')'
+                     | prefix-operator primary-expr
 
-prefix-operator		::= symb-identifier
-infix-operator		::= symb-identifier
+prefix-operator      ::= symb-identifier
+infix-operator       ::= [ "op" ] symb-identifier
 
-symb-identifier		::= ( punctuation | letter ) { punctuation | letter | digit }
-alnum-identifier 	::= letter { letter | digit | "'" | '_' }
+identifier	     ::= alnum-identifier
+		     | symb-identifier
+		     | long-identifier
 
-con-identifier	        ::= con-idenetifier-init { con-identifier-init }
-con-identifier-init     ::= upper-case { letter | digit | "'" | '_' }
+long-identifier	     ::= alnum-identifier { '.' alnum-identifier }
+symb-identifier      ::= (punctuation | letter) { punctuation | letter | digit }
+alnum-identifier     ::= letter { letter | digit | "'" | '_' }
 
+con-identifier       ::= upper-case { letter | digit | "'" | '_' }
 
-literal-value		::= integer-literal
-			| string-literal
-			| character-literal
-			| float-literal
+literal-value        ::= integer-literal
+                     | string-literal
+                     | character-literal
+                     | float-literal
 
-float-literal		::= decimal-integer '.' decimal-integer
+float-literal        ::= decimal-integer '.' decimal-integer
 
+character-literal    ::= '#"' (c-escape-sequence | no-newline) '"'
+c-escape-sequence    ::= '\' (hex-escape | unicode-escape | c-escape-chars)
+hex-escape           ::= 'x' hex-digit [hex-digit]
+unicode-escape       ::= "U+" hex-digit [hex-digit [hex-digit [hex-digit]]]
+c-escape-chars       ::= 'a' | 'b' 
+                     | 'e' | 'f' 
+                     | 'n' | 'r' 
+                     | 't' | 'v' 
+                     | "'" | '"'
 
-character-literal	::= '#"' ( c-escape-sequence | no-newline ) '"'
-c-escape-sequence	::= '\' ( hex-escape | unicode-escape | c-escape-chars )
-hex-escape		::= 'x' hex-digit [ hex-digit ]
-unicode-escape		::= "U+" hex-digit [ hex-digit [ hex-digit [ hex-digit ] ] ] 
-c-escape-chars		::=  'a' | 'b' 
-			| 'e' | 'f' 
-			| 'n' | 'r' 
-			| 't' | 'v' 
-			| "'" | '"' 
+string-literal       ::= '"' { no-double-quote } '"'
 
+integer-literal      ::= decimal-integer
+                     | octal-integer
+                     | hexadecimal-integer
+                     | binary-integer
 
-string-literal		::= '"' { no-double-quote } '"'
+binary-integer       ::= binary-digit { binary-digit } 'B'
+octal-integer        ::= octal-digit { octal-digit } 'O'
+hexadecimal-integer  ::= hexadecimal-digit { hexadecimal-digit } 'H'
+decimal-integer      ::= decimal-digit { decimal-digit }
 
-integer-literal		::= decimal-integer
-			| octal-integer
-			| hexadecimal-integer
-			| decimal-integer
+binary-digit         ::= '0' | '1'
+octal-digit          ::= '0' | '1' | ... | '7'
+hexadecimal-digit    ::= decimal-digit | 'A' | ... | 'F' | 'a' | ... | 'f'
+decimal-digit        ::= '0' | '1' | ... | '8' | '9'
 
-binary-integer		::= binary-digit { binary-digit } 'B'
-octal-integer		::= octal-digit { octal-digit } 'O'
-hexadecimal-integer	::= hexadecimal-digit { hexadecimal-digit } 'H'
-decimal-integer		::= decimal-digit { decimal-digit }
+punctuation          ::= '!' | '"' | '#' | '$' 
+                     | '%' | '&' | ''' | '(' | ')' 
+                     | '*' | '+' | ',' | '-' | '.' 
+                     | '/' | ':' | ';' | '<' | '=' 
+                     | '>' | '?' | '@' | '[' | '\' 
+                     | ']' | '^' | '_' | '`' | '{' 
+                     | '|' | '}' | '~'
 
-binary-digit		::= '0' | '1'
-octal-digit		::= '0' | '1' | ... | '7'
-hexadecimal-digit	::= decimal-digit | 'A' | ... | 'F' | 'a' | ... | 'f'
-decimal-digit		::= '0' | '1' | ... | '8' | '9'
+letter               ::= lower-case | upper-case
+lower-case          ::= 'a' | 'b' | ... | 'y' | 'z'
+upper-case          ::= 'A' | 'B' | ... | 'Y' | 'Z'
 
+no-double-quote      ::= ? any-UTF8-character-except-double-quote ?
+no-newline           ::= ? any-UTF8-character-except-newline ?
+any-char             ::= ? any-UTF8-character ?
 
-punctuation		::= '!' | '"' | '#' | '$' 
-			| '%' | '&' | ''' | '(' | ')' 
-			| '*' | '+' | ',' | '-' | '.' 
-			| '/' | ':' | ';' | '<' | '=' 
-			| '>' | '?' | '@' | '[' | '\' 
-			| ']' | '^' | '_' | '`' | '{' 
-			| '|' | '}' | '~'
-
-letter			::= lower-case | upper-case
-lower-case		::= 'a' | 'b' | ... | 'y' | 'z'
-upper-case		::= 'A' | 'B' | ... | 'Y' | 'Z' 
-
-
-no-double-quote		::= ? any-UTF8-character-except-double-quote ?
-no-newline 		::= ? any-UTF8-character-except-newline ?
-any-char   		::= ? any-UTF8-character ?
