@@ -60,6 +60,7 @@ sub generate_declarations {
     my ($alloc_directives_ref) = @_;
 
     push @declarations, "unsigned long long $hash_function_name(void *ptr);";
+    push @declarations, "#define ALLOCPP_NULL ((void *)0)";
 
     foreach my $alloc_directive (@$alloc_directives_ref) {
         my $heap_decl = <<"END_HEAP";
@@ -72,10 +73,10 @@ sub generate_declarations {
 } $alloc_directive->{heap_name};
 END_HEAP
         push @declarations, $heap_decl;
-        push @declarations, "void $alloc_directive->{allocfn_name}(unsigned long long size);";
-        push @declarations, "void $alloc_directive->{reallocfn_name}(void* ptr, unsigned long long size);";
+        push @declarations, "void *$alloc_directive->{allocfn_name}(unsigned long long size);";
+        push @declarations, "void *$alloc_directive->{reallocfn_name}(void* ptr, unsigned long long size);";
         push @declarations, "void $alloc_directive->{dumpfn_name}(void);";
-        push @declarations, "$alloc_directive->{heap_name} *___HEAP__$alloc_directive->{heap_name} = NULL;";
+        push @declarations, "$alloc_directive->{heap_name} *___HEAP__$alloc_directive->{heap_name} = ALLOCPP_NULL;";
     }
 }
 
