@@ -5,9 +5,13 @@ toplevel-decls       ::= { toplevel-decl }
 toplevel-decl        ::= value-decl
                      | type-decl
                      | datatype-decl
-		     | infix-decl
+                     | infix-decl
+                     | import-decl
+		     | comment
 
 value-decl           ::= "val" alnum-identifier '=' expr ';'
+
+import-decl          ::= "import" long-identifier ';'
 
 type-decl            ::= "type" alnum-identifier '=' type-exp ';'
 
@@ -22,12 +26,13 @@ expr                 ::= pattern-list
                      | function-expression
                      | "raise" expr
                      | "try" expr "with" match-expression
+                     | record-literal  ; New addition
 
 let-binding          ::= "let" pattern '=' expr "in" expr
 
 infix-decl	     ::= "infix" [ decimal-digit ] [ identifier ] infix-operator
 		     | "infixr" [ decimal-digit ] [ identifier ] infix-operator
-		     | "nonfix" infix-operator
+  		     | "nonfix" infix-operator
 
 match-expression     ::= "match" expr "with" match-clauses "end"
 match-clauses        ::= match-clause { '|' match-clause }
@@ -37,21 +42,42 @@ function-expression  ::= "fun" pattern "->" expr
 
 type-exp             ::= type-atom
                      | type-atom "->" type-exp
+                     | list-type
 
 type-atom            ::= alnum-identifier
                      | '(' type-exp ')'
                      | type-atom alnum-identifier
+                     | record-type  ; New addition
+
+record-type          ::= '{' field-list '}'
+field-list           ::= field { ',' field }
+field                ::= alnum-identifier ':' type-exp
+
+record-literal       ::= '{' field-bindings '}'
+field-bindings       ::= field-binding { ',' field-binding }
+field-binding        ::= alnum-identifier '=' expr
 
 pattern              ::= pattern-constructor
                      | identifier-pattern
                      | literal-pattern
                      | wildcard-pattern
+                     | list-pattern
                      | '(' pattern-list ')'
+                     | record-pattern  ; New addition
 
 pattern-constructor  ::= con-identifier pattern-list
 
 pattern-list         ::= pattern-single { '|' pattern-single }
 pattern-single       ::= identifier infix-expr
+                     | list-pattern
+
+list-type            ::= '[' type-exp ']'
+
+list-pattern         ::= '[' pattern-list ']'
+
+record-pattern       ::= '{' field-patterns '}'
+field-patterns       ::= field-pattern { ',' field-pattern }
+field-pattern        ::= alnum-identifier '=' pattern
 
 identifier-pattern   ::= alnum-identifier | long-identifier
 
@@ -74,7 +100,7 @@ infix-operator       ::= [ "op" ] symb-identifier
 
 identifier	     ::= alnum-identifier
 		     | symb-identifier
-		     | long-identifier
+ 		     | long-identifier
 
 long-identifier	     ::= alnum-identifier { '.' alnum-identifier }
 symb-identifier      ::= (punctuation | letter) { punctuation | letter | digit }
@@ -125,10 +151,15 @@ punctuation          ::= '!' | '"' | '#' | '$'
                      | '|' | '}' | '~'
 
 letter               ::= lower-case | upper-case
-lower-case          ::= 'a' | 'b' | ... | 'y' | 'z'
-upper-case          ::= 'A' | 'B' | ... | 'Y' | 'Z'
+lower-case           ::= 'a' | 'b' | ... | 'y' | 'z'
+upper-case           ::= 'A' | 'B' | ... | 'Y' | 'Z'
 
+comment		     ::= ";;" { no-newline } newline
+
+newline		     ::= '\n'
 no-double-quote      ::= ? any-UTF8-character-except-double-quote ?
 no-newline           ::= ? any-UTF8-character-except-newline ?
 any-char             ::= ? any-UTF8-character ?
+
+
 
