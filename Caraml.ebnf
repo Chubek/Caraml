@@ -1,3 +1,14 @@
+# EBNF Grammar for the Caraml Language
+
+# Conventions
+## Terminal, Single-Char -> '<terminal>'
+## Terminal, Multi-Char  -> "<terminal>"
+## Repeat zero or more   -> { <non-terminal-or-rule> }
+## Repeat once or more   -> <non-terminal-or-rule> { <non-terminal-or-rule> }
+## Alternation	         -> <non-terminal-or-rule> | <non-terminal-or-rule>
+## Optional	         -> [ <non-terminal-or-rule> ]
+## Range		 -> <terminal> | ... | <terminal>
+
 module               ::= "module" alnum-identifier "where" toplevel-decls "end"
 
 toplevel-decls       ::= { toplevel-decl }
@@ -7,7 +18,7 @@ toplevel-decl        ::= value-decl
                      | datatype-decl
                      | infix-decl
                      | import-decl
-		     | comment
+                     | comment
 
 value-decl           ::= "val" alnum-identifier '=' expr ';'
 
@@ -20,19 +31,20 @@ constructor-list     ::= constructor { '|' constructor }
 constructor          ::= con-identifier "of" type-exp
 
 expr                 ::= pattern-list
-                     | let-binding "in" expr
+                     | let-binding [ "in" expr ]
                      | "if" expr "then" expr "else" expr
                      | match-expression
                      | function-expression
                      | "raise" expr
                      | "try" expr "with" match-expression
-                     | record-literal 
+                     | record-literal
+		     | '(' expr ')'
 
 let-binding          ::= "let" pattern '=' expr "in" expr
 
-infix-decl	     ::= "infix" [ decimal-digit ] [ identifier ] infix-operator
-		     | "infixr" [ decimal-digit ] [ identifier ] infix-operator
-  		     | "nonfix" infix-operator
+infix-decl           ::= "infix" [ decimal-digit ] [ identifier ] infix-operator
+                     | "infixr" [ decimal-digit ] [ identifier ] infix-operator
+                     | "nonfix" infix-operator
 
 match-expression     ::= "match" expr "with" match-clauses "end"
 match-clauses        ::= match-clause { '|' match-clause }
@@ -45,9 +57,9 @@ type-exp             ::= type-atom
                      | list-type
                      | basic-type
                      | polymorphic-type type-exp
-		     | tuple-type
+                     | tuple-type
 
-tuple-type	     ::= type-exp { '*' type-exp }
+tuple-type           ::= type-exp { '*' type-exp }
 
 type-atom            ::= alnum-identifier
                      | '(' type-exp ')'
@@ -59,7 +71,7 @@ basic-type           ::= "int"
                      | "char"
                      | "string"
                      | "bool"
-		     | "list"
+                     | "list"
 
 polymorphic-type     ::= "'" alnum-identifier
 
@@ -89,10 +101,10 @@ list-type            ::= '[' type-exp ']'
 
 list-literal         ::= '[' list-item-list ']'
 
-list-item-list	     ::= list-item { ";;" list-item }
+list-item-list       ::= list-item { ";;" list-item }
 
-list-item	     ::= literal-value
-		     | identifier
+list-item            ::= literal-value
+                     | identifier
 
 record-pattern       ::= '{' field-patterns '}'
 field-patterns       ::= field-pattern { ',' field-pattern }
@@ -117,11 +129,11 @@ primary-expr         ::= identifier
 prefix-operator      ::= symb-identifier
 infix-operator       ::= [ "op" ] symb-identifier
 
-identifier	     ::= alnum-identifier
-		     | symb-identifier
- 		     | long-identifier
+identifier           ::= alnum-identifier
+                     | symb-identifier
+                     | long-identifier
 
-long-identifier	     ::= alnum-identifier { '.' alnum-identifier }
+long-identifier      ::= alnum-identifier { '.' alnum-identifier }
 symb-identifier      ::= (punctuation | letter) { punctuation | letter | digit }
 alnum-identifier     ::= letter { letter | digit | "'" | '_' }
 
@@ -131,7 +143,7 @@ literal-value        ::= integer-literal
                      | string-literal
                      | character-literal
                      | float-literal
-		     | list-literal
+                     | list-literal
 
 float-literal        ::= decimal-integer '.' decimal-integer
 
@@ -174,10 +186,10 @@ letter               ::= lower-case | upper-case
 lower-case           ::= 'a' | 'b' | ... | 'y' | 'z'
 upper-case           ::= 'A' | 'B' | ... | 'Y' | 'Z'
 
-comment		     ::= ";;" { no-newline } newline
-		     | "(*" { any-char } "*)"
+comment              ::= ";;" { no-newline } newline
+                     | "(*" { any-char } "*)"
 
-newline		     ::= '\n'
+newline              ::= '\n'
 no-double-quote      ::= ? any-UTF8-character-except-double-quote ?
 no-newline           ::= ? any-UTF8-character-except-newline ?
 any-char             ::= ? any-UTF8-character ?
