@@ -96,6 +96,33 @@ Input file. If not provided, it defaults to STDIN.
 
 Output file. If not provided, it defaults to STDOUT.
 
+=head1 AUTHOR
+
+This script was written by Chubak Bidpaa (chubakbidpaa@gmail.com).
+
+=head1 COPYRIGHT
+
+GNU GENERAL PUBLIC LICENSE
+Version 3, June 2007
+
+Preamble:
+The GNU General Public License is a free, copyleft license for software and other kinds of works.
+
+Terms and Conditions:
+- You are free to run, modify, and distribute the software.
+- Source code access is required for any distributed modifications.
+- Derivative works must be distributed under the GPL.
+
+Additional Permissions:
+- Propagation of covered works is permitted without modification.
+- Adding exceptions to this license is allowed.
+
+Disclaimer of Warranty:
+The software is provided without any warranty.
+
+Full License Text:
+The complete text of the GNU General Public License version 3.0 can be found at [GNU GPL v3.0](https://www.gnu.org/licenses/gpl-3.0.en.html).
+
 =back
 
 =cut
