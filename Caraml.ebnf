@@ -9,8 +9,11 @@
 ## Optional	         -> [ <non-terminal-or-rule> ]
 ## Range		 -> <terminal> | ... | <terminal>
 ## Lexical Capture	 -> ? <explanation> ?
+## Comment		 -> # <comment> or ## <comment>
 
-# Expressions and declarations, the main crux of the syntactic grammar
+# The Main Grammar
+
+## Syntactic Grammar: Expressions and declarations
 
 module               ::= "module" alnum-identifier "where" toplevel-decls "end"
 
@@ -55,7 +58,7 @@ match-clause         ::= pattern "->" expr
 
 function-expression  ::= "fun" pattern "->" expr
 
-# Type-related syntactic non-terminals
+## Syntactic Grammar: Type-related non-terminals
 
 type-exp             ::= type-atom
                      | type-atom "->" type-exp
@@ -79,7 +82,7 @@ basic-type           ::= "int"
 
 polymorphic-type     ::= "'" alnum-identifier
 
-# Record-related syntactic non-terminals
+## Syntactic Grammar: Record-related non-terminals
 
 record-type          ::= '{' field-list '}'
 field-list           ::= field { ',' field }
@@ -89,7 +92,7 @@ record-literal       ::= '{' field-bindings '}'
 field-bindings       ::= field-binding { ',' field-binding }
 field-binding        ::= alnum-identifier '=' expr
 
-# Pattern-related syntactic non-terminals
+## Syntactic Grammar: Pattern-related syntactic non-terminals
 
 pattern              ::= pattern-constructor
                      | identifier-pattern
@@ -128,7 +131,7 @@ primary-expr         ::= identifier
 prefix-operator      ::= symb-identifier
 infix-operator       ::= [ "op" ] symb-identifier
 
-# Lexical non-terminals
+# Lexical & Syntactic Grammar: The main non-terminals
 
 identifier           ::= alnum-identifier
                      | symb-identifier
@@ -178,7 +181,7 @@ hexadecimal-integer  ::= hexadecimal-digit { hexadecimal-digit } 'H'
 decimal-integer      ::= decimal-digit { decimal-digit }
 
 
-# Auxilary lexical non-terminals (not part of the main grammar)
+## Lexical Grammar: Basic lexical non-terminals
 
 binary-digit         ::= '0' | '1'
 octal-digit          ::= '0' | '1' | ... | '7'
@@ -201,7 +204,7 @@ upper-case           ::= 'A' | 'B' | ... | 'Y' | 'Z'
 comment              ::= ";;" { no-newline } newline
                      | "(*" { any-char } "*)"
 
-# Lexical captures
+## Lexical Grammar: Global Captures
 
 newline              ::= '\n'
 no-double-quote      ::= ? any-UTF8-character-except-double-quote ?
