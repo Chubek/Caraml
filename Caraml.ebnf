@@ -108,7 +108,8 @@ pattern-list         ::= pattern-single { '|' pattern-single }
 pattern-single       ::= identifier infix-expr
                      | list-pattern
 
-record-pattern       ::= '{' field-patterns '}'
+record-pattern       ::= '{' field-patterns | field-merge '}'
+field-merge	     ::= long-identifier '|' field-patterns
 field-patterns       ::= field-pattern { ',' field-pattern }
 field-pattern        ::= alnum-identifier '=' pattern
 
@@ -148,6 +149,9 @@ literal-value        ::= integer-literal
                      | character-literal
                      | float-literal
                      | list-literal
+		     | tuple-literal
+
+tuple-literal	     ::= '(' literal-value { '*' literal-value } ')'
 
 list-literal         ::= '[' list-item-list ']'
 
