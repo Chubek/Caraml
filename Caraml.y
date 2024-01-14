@@ -1,143 +1,225 @@
 %{
-/* C code and include statements can go here */
 #include <stdio.h>
 %}
 
-/* Token definitions */
-%token MODULE WHERE END VAL TYPE DATATYPE OF FUN MATCH WITH IF THEN ELSE RAISE TRY RECORD NONFIX IN INFIX INFIXR IMPORT LET IDENTIFIER HEX_INTEGER DECIMAL_INTEGER BINARY_INTEGER OCTAL_INTEGER HEXADECIMAL_INTEGER STRING_LITERAL OP ARROW
+%token MODULE WHERE END VAL TYPE DATATYPE OF FUN MATCH WITH IF THEN ELSE RAISE TRY RECORD NONFIX IN INFIX INFIXR IMPORT LET IDENTIFIER HEX_INTEGER DECIMAL_INTEGER BINARY_INTEGER OCTAL_INTEGER HEXADECIMAL_INTEGER STRING_LITERAL OP ARROW CHARACTER_LITERAL SYMB_IDENTIFIER ALNUM_IDENTIFIER CON_IDENTIFIER FAILWITH TYPE_INT TYPE_FLOAT TYPE_CHAR TYPE_STRING TYPE_LIST TYPE_BOOL
 
-/* Grammar rules */
 %%
 
 module               : /* empty */
-		     | MODULE alnum_identifier WHERE toplevel_decls END
+		     | MODULE ALNUM_IDENTIFIER WHERE toplevel_decls END ';'
+		     ;
 
-toplevel_decls       : toplevel_decl
-                     | toplevel_decls toplevel_decl
+toplevel_decls       : toplevel_decls toplevel_decl
+		     | toplevel_decl
 
 toplevel_decl        : value_decl
                      | type_decl
                      | datatype_decl
                      | infix_decl
                      | import_decl
-                     | comment
+                     ;
 
-value_decl           : VAL alnum_identifier '=' expr ';'
+value_decl           : VAL ALNUM_IDENTIFIER '=' expr ';'
+		     ;
 
 import_decl          : IMPORT long_identifier ';'
+		     ;
 
-type_decl            : TYPE alnum_identifier '=' type_exp ';'
+type_decl            : TYPE ALNUM_IDENTIFIER '=' type_exp ';'
+		     ;
 
-datatype_decl        : DATATYPE alnum_identifier '=' constructor_list ';'
+datatype_decl        : DATATYPE ALNUM_IDENTIFIER '=' constructor_list ';'
+		     ;
+
 constructor_list     : constructor '|' constructor_list
                      | constructor
+		     ;
 
-constructor          : con_identifier OF type_exp
+constructor          : CON_IDENTIFIER OF type_exp
+		     ;
 
 expr                 : pattern_list
                      | let_binding IN expr
                      | IF expr THEN expr ELSE expr
                      | match_expression
                      | function_expression
-                     | RAISE expr
+		     | FAILWITH expr
+		     | RAISE expr
                      | TRY expr WITH match_expression
                      | record_literal
                      | '(' expr ')'
+		     ;
 
-let_binding          : LET pattern '=' expr IN expr
+let_binding          : LET pattern '=' expr in_expr_opt
 
-infix_decl           : INFIX decimal_digit identifier infix_operator
-                     | INFIXR decimal_digit identifier infix_operator
+in_expr_opt	     : /* empty */
+		     | IN expr
+
+infix_decl           : INFIX digit_opt alnum_ident_opt infix_operator
+                     | INFIXR digit_opt alnum_ident_opt infix_operator
                      | NONFIX infix_operator
 
+digit_opt	     : /* empty */
+	       	     | '0'
+		     | '1' 
+		     | '2'
+		     | '3'
+		     | '4'
+		     | '5'
+		     | '6'
+		     | '7'
+		     | '8'
+		     | '9'
+
+alnum_ident_opt	     : /* empty */
+		     | ALNUM_IDENTIFIER
+		     ;
+
 match_expression     : MATCH expr WITH match_clauses END
+		     ;
+
 match_clauses        : match_clause '|' match_clauses
                      | match_clause
+		     ;
 
 match_clause         : pattern ARROW expr
+		     ;
 
 function_expression  : FUN pattern ARROW expr
+		     ;
 
 type_exp             : type_atom
                      | type_atom ARROW type_exp
                      | basic_type
                      | polymorphic_type type_exp
                      | tuple_type
+		     ;
 
 tuple_type           : type_exp '*' type_exp
                      | type_exp
+		     ;
 
-type_atom            : alnum_identifier
+type_atom            : ALNUM_IDENTIFIER
                      | '(' type_exp ')'
-                     | type_atom alnum_identifier
+                     | type_atom ALNUM_IDENTIFIER
                      | record_type
+		     ;
 
-basic_type           : "int"
-                     | "float"
-                     | "char"
-                     | "string"
-                     | "bool"
-                     | "list"
+basic_type           : TYPE_INT
+                     | TYPE_FLOAT
+                     | TYPE_CHAR
+                     | TYPE_STRING
+                     | TYPE_BOOL
+                     | TYPE_LIST
+		     ;
 
-polymorphic_type     : "'" alnum_identifier
+polymorphic_type     : '`' ALNUM_IDENTIFIER
+		     ;
 
 record_type          : '{' field_list '}'
+		     ;
+
 field_list           : field ',' field_list
                      | field
+		     ;
 
-field                : alnum_identifier ':' type_exp
+field                : ALNUM_IDENTIFIER ':' type_exp
+		     ;
 
 record_literal       : '{' field_bindings '}'
+		     ;
+
 field_bindings       : field_binding ',' field_bindings
                      | field_binding
+		     ;
 
-field_binding        : alnum_identifier '=' expr
+field_binding        : ALNUM_IDENTIFIER '=' expr
+		     ;
 
 pattern_list         : pattern '|' pattern_list
                      | pattern
+		     ;
 
 pattern              : pattern_constructor
                      | identifier_pattern
                      | literal_pattern
                      | wildcard_pattern
-                     | list_pattern
                      | '(' pattern_list ')'
                      | record_pattern
+		     ;
 
-pattern_constructor  : con_identifier pattern_list
+pattern_constructor  : CON_IDENTIFIER pattern_list
+		     ;
 
 pattern_list         : pattern_single '|' pattern_list
                      | pattern_single
+		     ;
 
 pattern_single       : identifier infix_expr
                      | list_pattern
+		     ;
 
 record_pattern       : '{' field_patterns '}'
 field_patterns       : field_pattern ',' field_patterns
                      | field_pattern
+		     ;
 
-field_pattern        : alnum_identifier '=' pattern
+field_pattern        : ALNUM_IDENTIFIER '=' pattern
+		     ;
 
-identifier_pattern   : alnum_identifier
+identifier_pattern   : ALNUM_IDENTIFIER
                      | long_identifier
+		     ;
 
-literal_pattern      : integer_literal
-                     | string_literal
-                     | character_literal
+literal_pattern      : literal_value
+		     ;
 
 wildcard_pattern     : '_'
+		     ;
 
-infix_expr           : primary_expr infix_operator primary_expr
+infix_expr           : primary_expr infix_operator infix_expr
+		     | primary_expr
+		     ;
 
 primary_expr         : identifier
                      | literal_value
-                     | con_identifier primary_expr
+                     | CON_IDENTIFIER primary_expr
                      | '(' primary_expr ')'
                      | prefix_operator primary_expr
+		     ;
 
-prefix_operator      : symb_identifier
-infix_operator       : OP symb_identifier
-                     | symb_identifier
+prefix_operator      : SYMB_IDENTIFIER
+		     ;
+
+infix_operator       : OP SYMB_IDENTIFIER
+                     | SYMB_IDENTIFIER
+		     ;
+
+identifier	     : SYMB_IDENTIFIER
+		     | ALNUM_IDENTIFIER
+		     | CON_IDENTIFIER
+		     | long_identifier
+		     ;
+
+long_identifier	     : ALNUM_IDENTIFIER '.' long_identifier
+		     | ALNUM_IDENTIFIER
+
+list_literal	     : '[' literal_value_list ']'
+
+literal_value_list   : literal_value DOUBLE_SEMI literal_value_list
+		     | literal_value
+		     ;
+
+literal_value	     : DECIMAL_INTEGER
+		     | HEXADECIMAL_INTEGER
+		     | OCTAL_INTEGER
+		     | BINARY_INTEGER
+		     | FLOAT_LITERAL
+		     | STRING_LITERAL
+		     | CHARACTER_LITERAL
+		     | list_literal
+		     ;
 
 %%
 
