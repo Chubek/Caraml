@@ -40,6 +40,9 @@ any_char         .
 "infixr"            { return INFIXR;   }
 "import"            { return IMPORT;   }
 "let"               { return LET;      }
+"op"		    { return OP;       }
+"->"		    { return ARROW;    }
+
 
 {letter}{alnum_identifier}  { return IDENTIFIER; 	  }
 {hex_digit}+                { return HEX_INTEGER; 	  }
@@ -53,7 +56,7 @@ any_char         .
 "(*".*"*)"              { /* ignore comments */ }
 ";;".*                  { /* ignore comments */ }
 
-.                       { /* catch-all for unrecognized characters */ }
+{any_char}              { /* catch-all for unrecognized characters */ }
 
 %%
 
