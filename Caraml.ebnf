@@ -1,19 +1,20 @@
 # EBNF Grammar for the Caraml Language
+# Author: Chubak Bidpaa
 
-## Conventions
-## Terminal, Single-Char -> '<terminal>'
-## Terminal, Multi-Char  -> "<terminal>"
-## Repeat zero or more   -> { <non-terminal-or-rule> }
-## Repeat once or more   -> <non-terminal-or-rule> { <non-terminal-or-rule> }
-## Alternation	         -> <non-terminal-or-rule> | <non-terminal-or-rule>
-## Optional	         -> [ <non-terminal-or-rule> ]
-## Range		 -> <terminal> | ... | <terminal>
-## Lexical Capture	 -> ? <explanation> ?
-## Comment		 -> # <comment> or ## <comment>
+## EBNF Conventions
+## Terminal, Single-Char   -> '<terminal>'
+## Terminal, Multi-Char    -> "<terminal>"
+## Repeat zero or more     -> { <non-terminal-or-rule> }
+## Repeat once or more     -> <non-terminal-or-rule> { <non-terminal-or-rule> }
+## Alternation             -> <non-terminal-or-rule> | <non-terminal-or-rule>
+## Optional                -> [ <non-terminal-or-rule> ]
+## Range                   -> <terminal> | ... | <terminal>
+## Lexical Capture         -> ? <explanation> ?
+## Comment                 -> # <comment> or ## <comment>
 
-# The Main Grammar
+# The Syntactic Grammar
 
-## Syntactic Grammar: Expressions and declarations
+## Syntactic Grammar Section::A. Expressions and Declarations
 
 module               ::= "module" alnum-identifier "where" toplevel-decls "end"
 
@@ -36,17 +37,25 @@ datatype-decl        ::= "datatype" alnum-identifier '=' constructor-list ';'
 constructor-list     ::= constructor { '|' constructor }
 constructor          ::= con-identifier "of" type-exp
 
+expr-list	     ::= expr { ';' expr }
+
 expr                 ::= pattern-list
-                     | let-binding [ "in" expr ]
+                     | let-binding
+		     | local-binding
                      | "if" expr "then" expr "else" expr
+		     | "while" expr "do" expr
+		     | "for" expr "do" expr
                      | match-expression
                      | function-expression
                      | "raise" expr
                      | "try" expr "with" match-expression
                      | record-literal
+		     | long-identifier "<-" expr
                      | '(' expr ')'
 
-let-binding          ::= "let" pattern '=' expr "in" expr
+let-binding          ::= "let" [ "rec" ] pattern '=' expr-list [ "in" expr ]
+
+local-binding	     ::= "local" pattern '=' expr-list "in" expr-list  "end"
 
 infix-decl           ::= "infix" [ decimal-digit ] [ identifier ] infix-operator
                      | "infixr" [ decimal-digit ] [ identifier ] infix-operator
@@ -58,7 +67,7 @@ match-clause         ::= pattern "->" expr
 
 function-expression  ::= "fun" pattern "->" expr
 
-## Syntactic Grammar: Type-related non-terminals
+## Syntactic Grammar Section::B. Type-related Non-terminals
 
 type-exp             ::= type-atom
                      | type-atom "->" type-exp
@@ -73,16 +82,9 @@ type-atom            ::= alnum-identifier
                      | type-atom alnum-identifier
                      | record-type
 
-basic-type           ::= "int"
-                     | "float"
-                     | "char"
-                     | "string"
-                     | "bool"
-                     | "list"
-
 polymorphic-type     ::= "'" alnum-identifier
 
-## Syntactic Grammar: Record-related non-terminals
+## Syntactic Grammar Section::C. Record-related Non-terminals
 
 record-type          ::= '{' field-list '}'
 field-list           ::= field { ',' field }
@@ -92,15 +94,20 @@ record-literal       ::= '{' field-bindings '}'
 field-bindings       ::= field-binding { ',' field-binding }
 field-binding        ::= alnum-identifier '=' expr
 
-## Syntactic Grammar: Pattern-related syntactic non-terminals
+## Syntactic Grammar Section::D. Pattern-related Syntactic Non-terminals
 
 pattern              ::= pattern-constructor
                      | identifier-pattern
                      | literal-pattern
                      | wildcard-pattern
                      | list-pattern
+		     | inductive-pattern
                      | '(' pattern-list ')'
                      | record-pattern
+		     | unit-pattern
+		     | restriction-pattern
+
+unit-pattern	     ::= "()"
 
 pattern-constructor  ::= con-identifier pattern-list
 
@@ -108,12 +115,20 @@ pattern-list         ::= pattern-single { '|' pattern-single }
 pattern-single       ::= identifier infix-expr
                      | list-pattern
 
+tuple-pattern	     ::= '(' type-xpr  { "::" type-xpr } ')'
+
+list-pattern	     ::= '[' type-expr { "::" type-exp } ']'
+
 record-pattern       ::= '{' field-patterns | field-merge '}'
-field-merge	     ::= long-identifier '|' field-patterns
+field-merge          ::= long-identifier '|' field-patterns
 field-patterns       ::= field-pattern { ',' field-pattern }
 field-pattern        ::= alnum-identifier '=' pattern
 
-identifier-pattern   ::= alnum-identifier | long-identifier
+restriction-pattern  ::= '(' identifier ':' type-exp ')'
+
+inductive-pattern    ::= identifier { "::" identifier }
+
+identifier-pattern   ::= identifier { identifier }
 
 literal-pattern      ::= integer-literal
                      | string-literal
@@ -132,26 +147,20 @@ primary-expr         ::= identifier
 prefix-operator      ::= symb-identifier
 infix-operator       ::= [ "op" ] symb-identifier
 
-# Lexical & Syntactic Grammar: The main non-terminals
+# Syntactic Grammar Section::E. The main non-terminals
 
 identifier           ::= alnum-identifier
                      | symb-identifier
                      | long-identifier
-
-long-identifier      ::= alnum-identifier { '.' alnum-identifier }
-symb-identifier      ::= ( punctuation | letter ) { punctuation | letter | digit }
-alnum-identifier     ::= letter { letter | digit | "'" | '_' }
-
-con-identifier       ::= upper-case { letter | digit | "'" | '_' }
 
 literal-value        ::= integer-literal
                      | string-literal
                      | character-literal
                      | float-literal
                      | list-literal
-		     | tuple-literal
+                     | tuple-literal
 
-tuple-literal	     ::= '(' literal-value { '*' literal-value } ')'
+tuple-literal        ::= '(' literal-value { "::" literal-value } ')'
 
 list-literal         ::= '[' list-item-list ']'
 
@@ -162,17 +171,6 @@ list-item            ::= literal-value
 
 float-literal        ::= decimal-integer '.' decimal-integer
 
-character-literal    ::= '#"' ( c-escape-sequence | no-newline ) '"'
-c-escape-sequence    ::= '\' ( hex-escape | unicode-escape | c-escape-chars )
-hex-escape           ::= 'x' hex-digit [ hex-digit ]
-unicode-escape       ::= "U+" hex-digit [ hex-digit [ hex-digit [ hex-digit ] ] ]
-c-escape-chars       ::= 'a' | 'b'
-                     | 'e' | 'f'
-                     | 'n' | 'r'
-                     | 't' | 'v'
-                     | "'" | '"'
-
-string-literal       ::= '"' { no-double-quote } '"'
 
 integer-literal      ::= decimal-integer
                      | octal-integer
@@ -185,7 +183,29 @@ hexadecimal-integer  ::= hexadecimal-digit { hexadecimal-digit } 'H'
 decimal-integer      ::= decimal-digit { decimal-digit }
 
 
-## Lexical Grammar: Basic lexical non-terminals
+
+
+# The Lexical Grammar
+
+## Lexical Grammar Section::A. Non-terminals for fundemental elements
+
+long-identifier      ::= alnum-identifier { '.' alnum-identifier }
+symb-identifier      ::= ( punctuation | letter ) { punctuation | letter | digit }
+alnum-identifier     ::= letter { letter | digit | "'" | '_' }
+con-identifier       ::= upper-case { letter | digit | "'" | '_' }
+
+character-literal    ::= '#"' ( c-escape-sequence | no-newline ) '"'
+c-escape-sequence    ::= '\' ( hex-escape | unicode-escape | c-escape-chars )
+hex-escape           ::= 'x' hex-digit [ hex-digit ]
+unicode-escape       ::= "U+" hex-digit [ hex-digit [ hex-digit [ hex-digit ] ] ]
+c-escape-chars       ::= 'a' | 'b'
+                     | 'e' | 'f'
+                     | 'n' | 'r'
+                     | 't' | 'v'
+                     | "'" | '"'
+
+
+string-literal       ::= '"' { no-double-quote } '"'
 
 binary-digit         ::= '0' | '1'
 octal-digit          ::= '0' | '1' | ... | '7'
@@ -200,7 +220,6 @@ punctuation          ::= '!' | '"' | '#' | '$'
                      | ']' | '^' | '_' | '`' | '{'
                      | '|' | '}' | '~'
 
-
 letter               ::= lower-case | upper-case
 lower-case           ::= 'a' | 'b' | ... | 'y' | 'z'
 upper-case           ::= 'A' | 'B' | ... | 'Y' | 'Z'
@@ -208,10 +227,21 @@ upper-case           ::= 'A' | 'B' | ... | 'Y' | 'Z'
 comment              ::= ";;" { no-newline } newline
                      | "(*" { any-char } "*)"
 
-## Lexical Grammar: Global Captures
+basic-type           ::= "int"
+                     | "float"
+                     | "char"
+                     | "string"
+                     | "bool"
+                     | "list"
+		     | "unit"
+		     | "tuple"
+
+
+## Lexical Grammar Section::B. Descriptive captures
 
 newline              ::= '\n'
 no-double-quote      ::= ? any-UTF8-character-except-double-quote ?
 no-newline           ::= ? any-UTF8-character-except-newline ?
 any-char             ::= ? any-UTF8-character ?
+
 
