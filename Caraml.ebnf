@@ -1,6 +1,6 @@
 # EBNF Grammar for the Caraml Language
 
-# Conventions
+## Conventions
 ## Terminal, Single-Char -> '<terminal>'
 ## Terminal, Multi-Char  -> "<terminal>"
 ## Repeat zero or more   -> { <non-terminal-or-rule> }
@@ -8,6 +8,9 @@
 ## Alternation	         -> <non-terminal-or-rule> | <non-terminal-or-rule>
 ## Optional	         -> [ <non-terminal-or-rule> ]
 ## Range		 -> <terminal> | ... | <terminal>
+## Lexical Capture	 -> ? <explanation> ?
+
+# Expressions and declarations, the main crux of the syntactic grammar
 
 module               ::= "module" alnum-identifier "where" toplevel-decls "end"
 
@@ -38,7 +41,7 @@ expr                 ::= pattern-list
                      | "raise" expr
                      | "try" expr "with" match-expression
                      | record-literal
-		     | '(' expr ')'
+                     | '(' expr ')'
 
 let-binding          ::= "let" pattern '=' expr "in" expr
 
@@ -52,9 +55,10 @@ match-clause         ::= pattern "->" expr
 
 function-expression  ::= "fun" pattern "->" expr
 
+# Type-related syntactic non-terminals
+
 type-exp             ::= type-atom
                      | type-atom "->" type-exp
-                     | list-type
                      | basic-type
                      | polymorphic-type type-exp
                      | tuple-type
@@ -75,6 +79,8 @@ basic-type           ::= "int"
 
 polymorphic-type     ::= "'" alnum-identifier
 
+# Record-related syntactic non-terminals
+
 record-type          ::= '{' field-list '}'
 field-list           ::= field { ',' field }
 field                ::= alnum-identifier ':' type-exp
@@ -83,28 +89,21 @@ record-literal       ::= '{' field-bindings '}'
 field-bindings       ::= field-binding { ',' field-binding }
 field-binding        ::= alnum-identifier '=' expr
 
+# Pattern-related syntactic non-terminals
+
 pattern              ::= pattern-constructor
                      | identifier-pattern
                      | literal-pattern
                      | wildcard-pattern
                      | list-pattern
                      | '(' pattern-list ')'
-                     | record-pattern 
+                     | record-pattern
 
 pattern-constructor  ::= con-identifier pattern-list
 
 pattern-list         ::= pattern-single { '|' pattern-single }
 pattern-single       ::= identifier infix-expr
                      | list-pattern
-
-list-type            ::= '[' type-exp ']'
-
-list-literal         ::= '[' list-item-list ']'
-
-list-item-list       ::= list-item { ";;" list-item }
-
-list-item            ::= literal-value
-                     | identifier
 
 record-pattern       ::= '{' field-patterns '}'
 field-patterns       ::= field-pattern { ',' field-pattern }
@@ -129,12 +128,14 @@ primary-expr         ::= identifier
 prefix-operator      ::= symb-identifier
 infix-operator       ::= [ "op" ] symb-identifier
 
+# Lexical non-terminals
+
 identifier           ::= alnum-identifier
                      | symb-identifier
                      | long-identifier
 
 long-identifier      ::= alnum-identifier { '.' alnum-identifier }
-symb-identifier      ::= (punctuation | letter) { punctuation | letter | digit }
+symb-identifier      ::= ( punctuation | letter ) { punctuation | letter | digit }
 alnum-identifier     ::= letter { letter | digit | "'" | '_' }
 
 con-identifier       ::= upper-case { letter | digit | "'" | '_' }
@@ -145,16 +146,23 @@ literal-value        ::= integer-literal
                      | float-literal
                      | list-literal
 
+list-literal         ::= '[' list-item-list ']'
+
+list-item-list       ::= list-item { ";;" list-item }
+
+list-item            ::= literal-value
+                     | identifier
+
 float-literal        ::= decimal-integer '.' decimal-integer
 
-character-literal    ::= '#"' (c-escape-sequence | no-newline) '"'
-c-escape-sequence    ::= '\' (hex-escape | unicode-escape | c-escape-chars)
-hex-escape           ::= 'x' hex-digit [hex-digit]
-unicode-escape       ::= "U+" hex-digit [hex-digit [hex-digit [hex-digit]]]
-c-escape-chars       ::= 'a' | 'b' 
-                     | 'e' | 'f' 
-                     | 'n' | 'r' 
-                     | 't' | 'v' 
+character-literal    ::= '#"' ( c-escape-sequence | no-newline ) '"'
+c-escape-sequence    ::= '\' ( hex-escape | unicode-escape | c-escape-chars )
+hex-escape           ::= 'x' hex-digit [ hex-digit ]
+unicode-escape       ::= "U+" hex-digit [ hex-digit [ hex-digit [ hex-digit ] ] ]
+c-escape-chars       ::= 'a' | 'b'
+                     | 'e' | 'f'
+                     | 'n' | 'r'
+                     | 't' | 'v'
                      | "'" | '"'
 
 string-literal       ::= '"' { no-double-quote } '"'
@@ -169,18 +177,22 @@ octal-integer        ::= octal-digit { octal-digit } 'O'
 hexadecimal-integer  ::= hexadecimal-digit { hexadecimal-digit } 'H'
 decimal-integer      ::= decimal-digit { decimal-digit }
 
+
+# Auxilary lexical non-terminals (not part of the main grammar)
+
 binary-digit         ::= '0' | '1'
 octal-digit          ::= '0' | '1' | ... | '7'
 hexadecimal-digit    ::= decimal-digit | 'A' | ... | 'F' | 'a' | ... | 'f'
 decimal-digit        ::= '0' | '1' | ... | '8' | '9'
 
-punctuation          ::= '!' | '"' | '#' | '$' 
-                     | '%' | '&' | ''' | '(' | ')' 
-                     | '*' | '+' | ',' | '-' | '.' 
-                     | '/' | ':' | ';' | '<' | '=' 
-                     | '>' | '?' | '@' | '[' | '\' 
-                     | ']' | '^' | '_' | '`' | '{' 
+punctuation          ::= '!' | '"' | '#' | '$'
+                     | '%' | '&' | ''' | '(' | ')'
+                     | '*' | '+' | ',' | '-' | '.'
+                     | '/' | ':' | ';' | '<' | '='
+                     | '>' | '?' | '@' | '[' | '\'
+                     | ']' | '^' | '_' | '`' | '{'
                      | '|' | '}' | '~'
+
 
 letter               ::= lower-case | upper-case
 lower-case           ::= 'a' | 'b' | ... | 'y' | 'z'
@@ -188,6 +200,8 @@ upper-case           ::= 'A' | 'B' | ... | 'Y' | 'Z'
 
 comment              ::= ";;" { no-newline } newline
                      | "(*" { any-char } "*)"
+
+# Lexical captures
 
 newline              ::= '\n'
 no-double-quote      ::= ? any-UTF8-character-except-double-quote ?
