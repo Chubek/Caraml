@@ -106,3 +106,117 @@ end
 In this example, the `Tree` type is defined with two constructors: `Leaf` and `Node`. The `sumTree` function recursively calculates the sum of values in the tree.
 
 These features collectively contribute to the expressive power of Caraml, providing developers with a versatile set of tools for building modular, functional, and readable programs.
+
+## Records
+
+Caraml introduces the concept of records, allowing developers to define structured data types with named fields. Records in Caraml serve as a collection of types, providing a mechanism similar to classes or objects in object-oriented languages.
+
+### Record Definition
+
+To define a record, use the `record` declaration followed by the field names and their corresponding types:
+
+```caraml
+module RecordExample where
+  record Point = {
+    x: int;
+    y: int;
+  };
+end
+```
+
+In this example, a record named `Point` is defined with two fields, `x` and `y`, both of type `int`.
+
+### Record Instantiation
+
+To create an instance of a record, use the record's name and provide values for its fields:
+
+```caraml
+module RecordUsageExample where
+  let myPoint = RecordExample.Point { x = 10; y = 20 };
+end
+```
+
+Here, an instance of the `Point` record is created with values 10 for `x` and 20 for `y`.
+
+### Record Pattern Matching
+
+Records can be deconstructed using pattern matching, allowing developers to access individual fields:
+
+```caraml
+module RecordPatternMatchingExample where
+  let printPoint point =
+    match point with
+    | RecordExample.Point { x = px; y = py } =>
+      print("x: " + px + ", y: " + py);
+  end
+```
+
+In this example, the `printPoint` function uses pattern matching to extract values from the `Point` record and print them.
+
+### Update Syntax
+
+Caraml provides a concise syntax for updating records, creating a new record with modified fields:
+
+```caraml
+module RecordUpdateExample where
+  let originalPoint = RecordExample.Point { x = 5; y = 10 };
+  let updatedPoint = originalPoint { y = 20 };
+end
+```
+
+Here, `updatedPoint` is a new record based on `originalPoint` with the `y` field modified to 20.
+
+Records in Caraml enhance the language's expressiveness, allowing developers to model complex data structures with named fields and providing convenient syntax for instantiation, pattern matching, and updates.
+
+## Syntax for Records
+
+The syntax for defining, instantiating, and using records in Caraml is as follows:
+
+### Record Definition
+
+```caraml
+module RecordExample where
+  type Point = {
+    x: int;
+    y: int;
+  };
+end
+```
+
+The `record-type` non-terminal is used to define a new record type with a given name. It consists of the keyword 'record,' followed by the record's name (`alnum-identifier`), an equals sign '=', and the list of fields enclosed in curly braces '{' and '}'. Each field is specified with an `alnum-identifier` representing the field name, a colon ':', and the `type-exp` representing the field's type.
+
+### Record Instantiation
+
+```caraml
+module RecordUsageExample where
+  let myPoint = RecordExample.Point { x = 10; y = 20 };
+end
+```
+
+The `record-literal` non-terminal represents the instantiation of a record. It starts with the record's name (`alnum-identifier`), followed by an opening brace '{,' a list of `field-bindings` specifying values for the record's fields, and a closing brace '}'.
+
+### Record Pattern Matching
+
+```caraml
+module RecordPatternMatchingExample where
+  let printPoint point =
+    match point with
+    | RecordExample.Point { x = px; y = py } =>
+      print("x: " + px + ", y: " + py);
+  end
+```
+
+To perform pattern matching on records, the `pattern` non-terminal includes the `record-pattern` non-terminal. A record pattern starts with the record's name (`alnum-identifier`), followed by an opening brace '{,' a list of `field-patterns` specifying patterns for the record's fields, and a closing brace '}'.
+
+### Update Syntax
+
+```caraml
+module RecordUpdateExample where
+  let originalPoint = RecordExample.Point { x = 5; y = 10 };
+  let updatedPoint = RecordExample.Point { originalPoint | y = 20 };
+end
+```
+
+The `record-update` non-terminal represents updating a record. It starts with the record's name (`alnum-identifier`), followed by an opening brace '{,' a list of `field-updates` specifying new values for the record's fields, and a closing brace '}'.
+
+These syntactic rules provide a clear and concise way to work with records in Caraml, allowing developers to define, instantiate, pattern match, and update records seamlessly within the language's expressive and modular framework.
