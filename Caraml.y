@@ -2,7 +2,7 @@
 #include <stdio.h>
 %}
 
-%token MODULE WHERE END VAL TYPE DATATYPE OF FUN MATCH WITH IF THEN ELSE RAISE TRY RECORD NONFIX IN INFIX INFIXR IMPORT LET IDENTIFIER HEX_INTEGER DECIMAL_INTEGER BINARY_INTEGER OCTAL_INTEGER HEXADECIMAL_INTEGER STRING_LITERAL OP ARROW CHARACTER_LITERAL SYMB_IDENTIFIER ALNUM_IDENTIFIER CON_IDENTIFIER FAILWITH TYPE_INT TYPE_FLOAT TYPE_CHAR TYPE_STRING TYPE_LIST TYPE_BOOL
+%token MODULE WHERE END VAL TYPE DATATYPE OF FUN MATCH WITH IF THEN ELSE RAISE TRY RECORD NONFIX IN INFIX INFIXR IMPORT LET IDENTIFIER HEX_INTEGER DECIMAL_INTEGER BINARY_INTEGER OCTAL_INTEGER HEXADECIMAL_INTEGER STRING_LITERAL OP ARROW CHARACTER_LITERAL SYMB_IDENTIFIER ALNUM_IDENTIFIER CON_IDENTIFIER FAILWITH TYPE_INT TYPE_FLOAT TYPE_CHAR TYPE_STRING TYPE_LIST TYPE_BOOL DOUBLE_SEMI DOUBLE_COLON
 
 %%
 
@@ -143,6 +143,7 @@ pattern_list         : pattern '|' pattern_list
 
 pattern              : pattern_constructor
                      | identifier_pattern
+		     | inductive_pattern
                      | literal_pattern
                      | wildcard_pattern
                      | '(' pattern_list ')'
@@ -172,8 +173,15 @@ identifier_pattern   : ALNUM_IDENTIFIER
                      | long_identifier
 		     ;
 
-literal_pattern      : literal_value
+literal_pattern      : literal_value_list
 		     ;
+
+inductive_pattern    : ALNUM_IDENTIFIER DOUBLE_COLON inductive_pattern
+		     | wildcard_pattern DOUBLE_COLON inductive_pattern
+		     | ALNUM_IDETNIFIER
+		     | wildcard_pattern
+		     ;
+
 
 wildcard_pattern     : '_'
 		     ;
@@ -204,8 +212,10 @@ identifier	     : SYMB_IDENTIFIER
 
 long_identifier	     : ALNUM_IDENTIFIER '.' long_identifier
 		     | ALNUM_IDENTIFIER
+		     ;
 
 list_literal	     : '[' literal_value_list ']'
+		     ;
 
 literal_value_list   : literal_value DOUBLE_SEMI literal_value_list
 		     | literal_value
