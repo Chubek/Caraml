@@ -1,0 +1,15 @@
+input.txt
+*.out
+*.a
+*.so
+*.o
+*.tmp
+*.temp
+_*
+build/
+test_*
+tpl.c
+tpl.h
+parser.c
+parser.h
+y.tab.c
