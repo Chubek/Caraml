@@ -162,6 +162,13 @@ pattern_single       : identifier infix_expr
 		     ;
 
 record_pattern       : '{' field_patterns '}'
+		     | '{' field_merge '}'
+		     ;
+
+
+field_merge	     : long_identifier '|' field_patterns
+
+
 field_patterns       : field_pattern ',' field_patterns
                      | field_pattern
 		     ;
@@ -217,6 +224,12 @@ long_identifier	     : ALNUM_IDENTIFIER '.' long_identifier
 list_literal	     : '[' literal_value_list ']'
 		     ;
 
+tuple_literal	     : '(' tuple_item ')'
+
+tuple_item	     : literal_value '*' tuple_item
+		     | literal_value
+		     ;
+
 literal_value_list   : literal_value DOUBLE_SEMI literal_value_list
 		     | literal_value
 		     ;
@@ -229,6 +242,7 @@ literal_value	     : DECIMAL_INTEGER
 		     | STRING_LITERAL
 		     | CHARACTER_LITERAL
 		     | list_literal
+		     | tuple_literal 
 		     ;
 
 %%
