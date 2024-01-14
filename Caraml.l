@@ -22,33 +22,40 @@ any_char 	 .
 
 %%
 
-"module"            {  charno += yyleng; return MODULE;   }
-"where"             {  charno += yyleng; return WHERE;    }
-"end"               {  charno += yyleng; return END;      }
-"val"               {  charno += yyleng; return VAL;      }
-"type"              {  charno += yyleng; return TYPE;     }
-"datatype"          {  charno += yyleng; return DATATYPE; }
-"of"                {  charno += yyleng; return OF;       }
-"fun"               {  charno += yyleng; return FUN;      }
-"match"             {  charno += yyleng; return MATCH;    }
-"with"              {  charno += yyleng; return WITH;     }
-"end"               {  charno += yyleng; return END;      }
-"if"                {  charno += yyleng; return IF;       }
-"then"              {  charno += yyleng; return THEN;     }
-"else"              {  charno += yyleng; return ELSE;     }
-"raise"             {  charno += yyleng; return RAISE;    }
-"try"               {  charno += yyleng; return TRY;      }
-"with"              {  charno += yyleng; return WITH;     }
-"record"            {  charno += yyleng; return RECORD;   }
-"nonfix"            {  charno += yyleng; return NONFIX;   }
-"in"                {  charno += yyleng; return IN;       }
-"infix"             {  charno += yyleng; return INFIX;    }
-"infixr"            {  charno += yyleng; return INFIXR;   }
-"import"            {  charno += yyleng; return IMPORT;   }
-"let"               {  charno += yyleng; return LET;      }
-"op"		    {  charno += yyleng; return OP;       }
-"->"		    {  charno += yyleng; return ARROW;    }
-
+"module"            {  charno += yyleng; return MODULE;      }
+"where"             {  charno += yyleng; return WHERE;       }
+"end"               {  charno += yyleng; return END;         }
+"val"               {  charno += yyleng; return VAL;         }
+"type"              {  charno += yyleng; return TYPE;        }
+"datatype"          {  charno += yyleng; return DATATYPE;    }
+"of"                {  charno += yyleng; return OF;          }
+"fun"               {  charno += yyleng; return FUN;         }
+"match"             {  charno += yyleng; return MATCH;       }
+"with"              {  charno += yyleng; return WITH;        }
+"end"               {  charno += yyleng; return END;         }
+"if"                {  charno += yyleng; return IF;          }
+"then"              {  charno += yyleng; return THEN;        }
+"else"              {  charno += yyleng; return ELSE;        }
+"raise"             {  charno += yyleng; return RAISE;       }
+"try"               {  charno += yyleng; return TRY;         }
+"with"              {  charno += yyleng; return WITH;        }
+"record"            {  charno += yyleng; return RECORD;      }
+"nonfix"            {  charno += yyleng; return NONFIX;      }
+"in"                {  charno += yyleng; return IN;          }
+"infix"             {  charno += yyleng; return INFIX;       }
+"infixr"            {  charno += yyleng; return INFIXR;      }
+"import"            {  charno += yyleng; return IMPORT;      }
+"let"               {  charno += yyleng; return LET;         }
+"op"		    {  charno += yyleng; return OP;          }
+"failwith"	    {  charno += yyleng; return FAILWITH;    }
+"int"		    {  charno += yyleng; return TYPE_INT;    }
+"string"	    {  charno += yyleng; return TYPE_STRING; }
+"float"		    {  charno += yyleng; return TYPE_FLOAT;  }
+"char"   	    {  charno += yyleng; return TYPE_CHAR;   }
+"list"		    {  charno += yyleng; return TYPE_LIST;   }
+"->"		    {  charno += yyleng; return ARROW;       }
+";;"		    {  charno += yyleng; return DOBULE_SEMI; }
+"::"		    {  charno += yyleng; return DOUBLE_COLON;}
 
 {alnum_ident}		 {  charno += yyleng; return ALNUM_IDENT;         }
 {symb_ident}		 {  charno += yyleng; return SYMB_IDENT;          }
