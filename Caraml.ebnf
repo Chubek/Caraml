@@ -26,7 +26,7 @@ expr                 ::= pattern-list
                      | function-expression
                      | "raise" expr
                      | "try" expr "with" match-expression
-                     | record-literal  ; New addition
+                     | record-literal 
 
 let-binding          ::= "let" pattern '=' expr "in" expr
 
@@ -43,11 +43,25 @@ function-expression  ::= "fun" pattern "->" expr
 type-exp             ::= type-atom
                      | type-atom "->" type-exp
                      | list-type
+                     | basic-type
+                     | polymorphic-type type-exp
+		     | tuple-type
+
+tuple-type	     ::= type-exp { '*' type-exp }
 
 type-atom            ::= alnum-identifier
                      | '(' type-exp ')'
                      | type-atom alnum-identifier
-                     | record-type  ; New addition
+                     | record-type
+
+basic-type           ::= "int"
+                     | "float"
+                     | "char"
+                     | "string"
+                     | "bool"
+		     | "list"
+
+polymorphic-type     ::= "'" alnum-identifier
 
 record-type          ::= '{' field-list '}'
 field-list           ::= field { ',' field }
@@ -63,7 +77,7 @@ pattern              ::= pattern-constructor
                      | wildcard-pattern
                      | list-pattern
                      | '(' pattern-list ')'
-                     | record-pattern  ; New addition
+                     | record-pattern 
 
 pattern-constructor  ::= con-identifier pattern-list
 
@@ -73,7 +87,12 @@ pattern-single       ::= identifier infix-expr
 
 list-type            ::= '[' type-exp ']'
 
-list-pattern         ::= '[' pattern-list ']'
+list-literal         ::= '[' list-item-list ']'
+
+list-item-list	     ::= list-item { ";;" list-item }
+
+list-item	     ::= literal-value
+		     | identifier
 
 record-pattern       ::= '{' field-patterns '}'
 field-patterns       ::= field-pattern { ',' field-pattern }
@@ -112,6 +131,7 @@ literal-value        ::= integer-literal
                      | string-literal
                      | character-literal
                      | float-literal
+		     | list-literal
 
 float-literal        ::= decimal-integer '.' decimal-integer
 
@@ -155,12 +175,10 @@ lower-case           ::= 'a' | 'b' | ... | 'y' | 'z'
 upper-case           ::= 'A' | 'B' | ... | 'Y' | 'Z'
 
 comment		     ::= ";;" { no-newline } newline
-		      | "(*" { any-char } "*)"
+		     | "(*" { any-char } "*)"
 
 newline		     ::= '\n'
 no-double-quote      ::= ? any-UTF8-character-except-double-quote ?
 no-newline           ::= ? any-UTF8-character-except-newline ?
 any-char             ::= ? any-UTF8-character ?
-
-
 
