@@ -155,6 +155,7 @@ lower-case           ::= 'a' | 'b' | ... | 'y' | 'z'
 upper-case           ::= 'A' | 'B' | ... | 'Y' | 'Z'
 
 comment		     ::= ";;" { no-newline } newline
+		      | "(*" { any-char } "*)"
 
 newline		     ::= '\n'
 no-double-quote      ::= ? any-UTF8-character-except-double-quote ?
