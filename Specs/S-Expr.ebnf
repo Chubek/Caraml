@@ -1,0 +1,17 @@
+# Grammar for Vanilla S-Expressions 
+# S-Expressions are used in Caraml's backend. Yacc translates a program unit to Abstract Syntax Tree S-Expressions. From this AST, a DAG S-Expression is created. From this DAG, a CFG (Control Flow Graph) and DFG (Data Flow Graph) is created. Then from the CFG an SSA Graph in S-Expression form is created and then an Interference Graph in the same syntax. So it is necessary to have an S-Expression grammar handy.
+
+s-expression	::= '(' item-sequence ')'
+
+item-sequence   ::= item { item }
+
+item		::= list | atom
+
+
+list		::= '(' atom-sequence ')'
+
+atom-sequence   ::= atom { atom }
+
+atom 		::= legal-character { legal-character }
+
+legal-character	::= ? any-character-except-left-and-right-parenthesis-and-newline-or-space ?
