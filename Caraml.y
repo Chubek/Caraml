@@ -1,251 +1,319 @@
 %{
-#include <stdio.h>
+
+
 %}
 
-%token MODULE WHERE END VAL TYPE DATATYPE OF FUN MATCH WITH IF THEN ELSE RAISE TRY RECORD NONFIX IN INFIX INFIXR IMPORT LET IDENTIFIER HEX_INTEGER DECIMAL_INTEGER BINARY_INTEGER OCTAL_INTEGER HEXADECIMAL_INTEGER STRING_LITERAL OP ARROW CHARACTER_LITERAL SYMB_IDENTIFIER ALNUM_IDENTIFIER CON_IDENTIFIER FAILWITH TYPE_INT TYPE_FLOAT TYPE_CHAR TYPE_STRING TYPE_LIST TYPE_BOOL DOUBLE_SEMI DOUBLE_COLON
+%union {
+    char *string;
+}
+
+%token <string> ALNUM_IDENT SYMB_IDENT CON_IDENT HexInteger DECIMAL_INTEGER BINARY_INTEGER OCTAL_INTEGER HEXADCIMAL_INTEGER
+%token <string> FLOAT_LITERAL STRING_LITERAL CHARACTER_LITERAL
+
+
 
 %%
 
-module               : /* empty */
-		     | MODULE ALNUM_IDENTIFIER WHERE toplevel_decls END ';'
-		     ;
-
-toplevel_decls       : toplevel_decls toplevel_decl
-		     | toplevel_decl
-
-toplevel_decl        : value_decl
-                     | type_decl
-                     | datatype_decl
-                     | infix_decl
-                     | import_decl
+CaramlProgram:        Module
+                     | ToplevelDecls
                      ;
 
-value_decl           : VAL ALNUM_IDENTIFIER '=' expr ';'
+Module:              MODULE ALNUM_IDENT WHERE ToplevelDecls END
+                     ;
+
+ToplevelDecls:      ToplevelDecl
+                     | Expression
+                     ;
+
+ToplevelDecl:       ValueDecl
+                     | TypeDecl
+                     | DatatypeDecl
+                     | InfixDecl
+                     | ImportDecl
+                     | IncludeDecl
+                     ;
+
+LocalDecls:         LocalDecl
+                     | Expression
+                     ;
+
+LocalDecl:          ValueDecl
+                     | TypeDecl
+                     | DatatypeDecl
+                     | InfixDecl
+                     | OpenDecl
+                     ;
+
+ValueDecl:          VAL ALNUM_IDENT '=' ExpressionList DOUBLE_SEMI
+                     ;
+
+OpenDecl:           OPEN ALNUM_IDENT DOUBLE_SEMI
+                     ;
+
+ImportDecl:         IMPORT ALNUM_IDENT DOUBLE_SEMI
+                     ;
+
+IncludeDecl:        INCLUDE STRING_LITERAL DOUBLE_SEMI
+                     ;
+
+TypeDecl:           TYPE ALNUM_IDENT '=' TypeExpression DOUBLE_SEMI
+                     ;
+
+DatatypeDecl:       DATATYPE ALNUM_IDENT '=' ConstructorList DOUBLE_SEMI
+                     ;
+
+RecordDecl:         RECORD ALNUM_IDENT '=' RecordType DOUBLE_SEMI
+                     ;
+
+InfixDecl:          INFIX DecimalIntegerOpt AlnumIdentOpt InfixOperator DOUBLE_SEMI
+                     | INFIXR DecimalIntegerOpt AlnumIdentOpt InfixOperator DOUBLE_SEMI
+                     | NONFIX InfixOperator DOUBLE_SEMI
+                     ;
+
+AlnumIdentOpt:      ALNUM_IDENTIFIER
+	             |;
+
+DecimalIntegerOpt:  DECIMAL_INTEGER
+		     | ;
+
+ExpressionList:     Expression
+	             | Expression '|' ExpressionList
+                     ;
+
+Expression:         PatternList
+                     | LetBinding
+                     | LocalBinding
+                     | ForBinding
+                     | IfBinding
+                     | WhileBinding
+                     | WhenBinding
+                     | LocalBinding
+                     | TryBinding
+                     | AssignBinding
+                     | RaiseBinding
+                     | FailwithBinding
+                     | MatchExpression
+                     | FunctionExpression
+                     | InfixExpression
+                     | PrefixExpression
+                     | '(' Expression ')'
+                     ;
+
+FailwithBinding:    FAILWITH Expression
+                     ;
+
+RaiseBinding:       RAISE Expression
+                     ;
+
+AssignBinding:      ALNUM_IDENT BACK_ARROW Expression
+                     ;
+
+TryBinding:         TRY ExpressionList WITH MatchExpression
+                     ;
+
+ForBinding:         FOR Pattern IN Expression DO ExpressionList END
+                     ;
+
+WhenBinding:        WHEN Pattern DO ExpressionList END
+                     ;
+
+WhileBinding:       WHILE Pattern DO ExpressionList END
+                     ;
+
+IfBinding:          IF Pattern THEN ExpressionList ELSE ExpressionList END
+                     ;
+
+LetBinding:         LET REC_OPT Pattern '=' ExpressionList InExpressionOpt
+                     ;
+
+RecOpt:             REC
+                     |;
+
+LocalBinding:       LOCAL LocalDecls IN ExpressionList END
+                     ;
+
+MatchExpression:    MATCH Expression WITH MatchClauses END
+                     ;
+
+MatchClauses:       MatchClause
+	             | MatchClause '|' MatchClauses
+                     ;
+
+MatchClause:        Pattern ARROW Expression
+                     ;
+
+FunctionExpression: FUN Pattern ARROW Expression
+                     ;
+
+PrefixExpression:   SYMB_IDENT Expression
+                     ;
+
+InfixExpression:    Expression
+	             | Expression InfixOperator InfixExpression
+                     ;
+
+ConstructorList:    Constructor
+	             | Constructor '|' ConstructorList
+                     ;
+
+Constructor:        CON_IDENT OF TypeExpression
+                     ;
+
+TypeExpression:     TypeAtom
+                     | TypeAtom ARROW TypeExpression
+                     | PolymorphicType TypeExpression
+                     | TupleType
+                     ;
+
+TupleType:          TypeExpression
+	             | TypeExpression '*' TupleType
+                     ;
+
+TypeAtom:           ALNUM_IDENT
+                     | '(' TypeExpression ')'
+                     | TypeAtom ALNUM_IDENT
+                     | BasicType
+                     ;
+
+PolymorphicType:    '`' ALNUM_IDENT
+                     ;
+
+RecordType:         '{' FieldList '}'
+                     ;
+
+FieldList:          Field
+	 	     | Field ';' FieldList
+                     ;
+
+Field:               ALNUM_IDENT ':' TypeExpression
+                     ;
+
+RecordLiteral:      '{' FieldBindings '}'
+                     ;
+
+FieldBindings:      FieldBinding 
+	             | FieldBinding ',' FieldBindings
+                     ;
+
+FieldBinding:       ALNUM_IDENT '=' Expression
+                     ;
+
+Pattern:             PatternConstructor
+                     | IdentifierPattern
+                     | LiteralPattern
+                     | WildcardPattern
+                     | ListPattern
+                     | InductivePattern
+                     | '(' PatternList ')'
+                     | UnitPattern
+                     | TuplePattern
+                     ;
+
+PatternConstructor: CON_IDENT PatternList
+                     ;
+
+UnitPattern:        UNIT_LITERAL
+                     ;
+
+PatternList:        PatternSingle
+	             | PatternSingle '|' PatternList
+                     ;
+
+PatternSingle:      Identifier InfixExpression
+                     | ListPattern
+                     ;
+
+TuplePattern:       '(' ListPatternItem ')'
+                     ;
+
+ListPattern:        '[' ListPatternItem ']'
+                     ;
+
+
+ListPatternItem:    TypeExpression
+	             | TypeExpression DOUBLE_COLON ListPatternItem
+	           
+	            
+
+TuplePattern:       '(' Identifier ':' TypeExpression ')'
+                     ;
+
+InductivePattern:   Identifier 
+                     | Identifier DOUBLE_COLON InductivePattern
+                     ;
+
+IdentifierPattern:  Identifier
+		     | Identifier IdentifierPattern
+                     ;
+
+LiteralPattern:     LiteralValue
+                     ;
+
+WildcardPattern:    '_'
+                     ;
+
+Identifier:         ALNUM_IDENT
+                     | SYMB_IDENT
+                     | CON_IDENT
+		     | LongIdentifier
+                     ;
+
+LongIdentifer:      Identifier
+	             | Identifier '.' LongIdentifier
 		     ;
 
-import_decl          : IMPORT long_identifier ';'
+LiteralValue:      IntegerLiteral
+                     | STRING_LITERAL
+                     | CHARACTER_LITERAL
+                     | FLOAT_LITERAL
+                     | ListLiteral
+                     | TupleLiteral
+                     | RecordLiteral
+                     ;
+
+TupleLiteral:      '(' TupleItemList ')'
+	    	    ;
+
+TupleItemList:     TupleItem
+		     | TupleItem DOUBLE_COLON TupleItemList
+                     ;
+
+TupleItem:         LiteralValue
+	 	     | Identifier
 		     ;
 
-type_decl            : TYPE ALNUM_IDENTIFIER '=' type_exp ';'
-		     ;
 
-datatype_decl        : DATATYPE ALNUM_IDENTIFIER '=' constructor_list ';'
-		     ;
+ListLiteral:        '[' ListItemList ']'
+                     ;
 
-constructor_list     : constructor '|' constructor_list
-                     | constructor
-		     ;
+ListItemList:      ListItem 
+	    	     | ListItem DOUBLE_SEMI ListItemList
+                     ;
 
-constructor          : CON_IDENTIFIER OF type_exp
-		     ;
+ListItem:          LiteralValue
+                     | Identifier
+                     ;
 
-expr                 : pattern_list
-                     | let_binding IN expr
-                     | IF expr THEN expr ELSE expr
-                     | match_expression
-                     | function_expression
-		     | FAILWITH expr
-		     | RAISE expr
-                     | TRY expr WITH match_expression
-                     | record_literal
-                     | '(' expr ')'
-		     ;
+IntegerLiteral:    DECIMAL_INTEGER
+                     | OCTAL_INTEGER
+                     | HEXADCIMAL_INTEGER
+                     | BINARY_INTEGER
+                     ;
 
-let_binding          : LET pattern '=' expr in_expr_opt
-
-in_expr_opt	     : /* empty */
-		     | IN expr
-
-infix_decl           : INFIX digit_opt alnum_ident_opt infix_operator
-                     | INFIXR digit_opt alnum_ident_opt infix_operator
-                     | NONFIX infix_operator
-
-digit_opt	     : /* empty */
-	       	     | '0'
-		     | '1' 
-		     | '2'
-		     | '3'
-		     | '4'
-		     | '5'
-		     | '6'
-		     | '7'
-		     | '8'
-		     | '9'
-
-alnum_ident_opt	     : /* empty */
-		     | ALNUM_IDENTIFIER
-		     ;
-
-match_expression     : MATCH expr WITH match_clauses END
-		     ;
-
-match_clauses        : match_clause '|' match_clauses
-                     | match_clause
-		     ;
-
-match_clause         : pattern ARROW expr
-		     ;
-
-function_expression  : FUN pattern ARROW expr
-		     ;
-
-type_exp             : type_atom
-                     | type_atom ARROW type_exp
-                     | basic_type
-                     | polymorphic_type type_exp
-                     | tuple_type
-		     ;
-
-tuple_type           : type_exp '*' type_exp
-                     | type_exp
-		     ;
-
-type_atom            : ALNUM_IDENTIFIER
-                     | '(' type_exp ')'
-                     | type_atom ALNUM_IDENTIFIER
-                     | record_type
-		     ;
-
-basic_type           : TYPE_INT
+BasicType:         TYPE_INT
                      | TYPE_FLOAT
                      | TYPE_CHAR
                      | TYPE_STRING
                      | TYPE_BOOL
                      | TYPE_LIST
-		     ;
-
-polymorphic_type     : '`' ALNUM_IDENTIFIER
-		     ;
-
-record_type          : '{' field_list '}'
-		     ;
-
-field_list           : field ',' field_list
-                     | field
-		     ;
-
-field                : ALNUM_IDENTIFIER ':' type_exp
-		     ;
-
-record_literal       : '{' field_bindings '}'
-		     ;
-
-field_bindings       : field_binding ',' field_bindings
-                     | field_binding
-		     ;
-
-field_binding        : ALNUM_IDENTIFIER '=' expr
-		     ;
-
-pattern_list         : pattern '|' pattern_list
-                     | pattern
-		     ;
-
-pattern              : pattern_constructor
-                     | identifier_pattern
-		     | inductive_pattern
-                     | literal_pattern
-                     | wildcard_pattern
-                     | '(' pattern_list ')'
-                     | record_pattern
-		     ;
-
-pattern_constructor  : CON_IDENTIFIER pattern_list
-		     ;
-
-pattern_list         : pattern_single '|' pattern_list
-                     | pattern_single
-		     ;
-
-pattern_single       : identifier infix_expr
-                     | list_pattern
-		     ;
-
-record_pattern       : '{' field_patterns '}'
-		     | '{' field_merge '}'
-		     ;
+                     | TYPE_UNIT
+                     | TYPE_TUPLE
+                     ;
 
 
-field_merge	     : long_identifier '|' field_patterns
-
-
-field_patterns       : field_pattern ',' field_patterns
-                     | field_pattern
-		     ;
-
-field_pattern        : ALNUM_IDENTIFIER '=' pattern
-		     ;
-
-identifier_pattern   : ALNUM_IDENTIFIER
-                     | long_identifier
-		     ;
-
-literal_pattern      : literal_value_list
-		     ;
-
-inductive_pattern    : ALNUM_IDENTIFIER DOUBLE_COLON inductive_pattern
-		     | wildcard_pattern DOUBLE_COLON inductive_pattern
-		     | ALNUM_IDETNIFIER
-		     | wildcard_pattern
-		     ;
-
-
-wildcard_pattern     : '_'
-		     ;
-
-infix_expr           : primary_expr infix_operator infix_expr
-		     | primary_expr
-		     ;
-
-primary_expr         : identifier
-                     | literal_value
-                     | CON_IDENTIFIER primary_expr
-                     | '(' primary_expr ')'
-                     | prefix_operator primary_expr
-		     ;
-
-prefix_operator      : SYMB_IDENTIFIER
-		     ;
-
-infix_operator       : OP SYMB_IDENTIFIER
-                     | SYMB_IDENTIFIER
-		     ;
-
-identifier	     : SYMB_IDENTIFIER
-		     | ALNUM_IDENTIFIER
-		     | CON_IDENTIFIER
-		     | long_identifier
-		     ;
-
-long_identifier	     : ALNUM_IDENTIFIER '.' long_identifier
-		     | ALNUM_IDENTIFIER
-		     ;
-
-list_literal	     : '[' literal_value_list ']'
-		     ;
-
-tuple_literal	     : '(' tuple_item ')'
-
-tuple_item	     : literal_value '*' tuple_item
-		     | literal_value
-		     ;
-
-literal_value_list   : literal_value DOUBLE_SEMI literal_value_list
-		     | literal_value
-		     ;
-
-literal_value	     : DECIMAL_INTEGER
-		     | HEXADECIMAL_INTEGER
-		     | OCTAL_INTEGER
-		     | BINARY_INTEGER
-		     | FLOAT_LITERAL
-		     | STRING_LITERAL
-		     | CHARACTER_LITERAL
-		     | list_literal
-		     | tuple_literal 
+InfixOperator:     SYMB_IDENTIFIER
+	             | ALNUM_IDENTIFIER
 		     ;
 
 %%
-
-/* User code can be added here */
 
