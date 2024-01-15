@@ -14,87 +14,115 @@
 
 # The Syntactic Grammar
 
-## Syntactic Grammar Section::A. Expressions and Declarations
+## Syntactic Grammar Section::A -> The Main Program
+
+caraml-program	     ::= { module | toplevel-decls | comment }
 
 module               ::= "module" alnum-identifier "where" toplevel-decls "end"
 
-toplevel-decls       ::= { toplevel-decl }
+## Syntactic Grammar Section::B -> The Declarations
 
+toplevel-decls       ::= { toplevel-decl | expression }
 toplevel-decl        ::= value-decl
                      | type-decl
                      | datatype-decl
                      | infix-decl
                      | import-decl
-                     | comment
+		     | include-decl
 
-value-decl           ::= "val" alnum-identifier '=' expr ';'
+local-decls	     ::= { local-decl | expression }
+local-decl           ::= value-decl
+		     | type-decl
+		     | datatype-decl
+		     | infix-decl
+		     | open-decl
 
-import-decl          ::= "import" long-identifier ';'
+value-decl           ::= "val" alnum-identifier '=' expression-list ";;"
+open-decl	     ::= "open" long-identifier ";;"
+import-decl          ::= "import" long-identifier ";;"
+include-decl	     ::= "include" string-literal ";;"
+type-decl            ::= "type" alnum-identifier '=' type-expression ";;"
+datatype-decl        ::= "datatype" alnum-identifier '=' constructor-list ";;"
+record-decl	     ::= "record" alnum-identifier '=' record-type ";;"
 
-type-decl            ::= "type" alnum-identifier '=' type-exp ';'
+infix-decl           ::= "infix" [ decimal-digit ] [ identifier ] infix-operator ";;"
+                     | "infixr" [ decimal-digit ] [ identifier ] infix-operator ";;"
+                     | "nonfix" infix-operator ";;"
 
-datatype-decl        ::= "datatype" alnum-identifier '=' constructor-list ';'
-constructor-list     ::= constructor { '|' constructor }
-constructor          ::= con-identifier "of" type-exp
 
-expr-list	     ::= expr { ';' expr }
+## Syntactic Grammar Section::D -> The Expressions & Bindings
 
-expr                 ::= pattern-list
+expression-list	     ::= expression { ';' expression }
+expression           ::= pattern-list
                      | let-binding
 		     | local-binding
-                     | "if" expr "then" expr "else" expr
-		     | "while" expr "do" expr
-		     | "for" expr "do" expr
+		     | for-binding
+		     | if-binding
+		     | while-binding
+		     | when-binding
+		     | local-binding
+		     | try-binding
+		     | assign-binding
+		     | raise-binding
+		     | failwith-binding
                      | match-expression
                      | function-expression
-                     | "raise" expr
-                     | "try" expr "with" match-expression
-                     | record-literal
-		     | long-identifier "<-" expr
-                     | '(' expr ')'
+		     | infix-expression
+		     | prefix-expression
+                     | '(' expression ')'
 
-let-binding          ::= "let" [ "rec" ] pattern '=' expr-list [ "in" expr ]
 
-local-binding	     ::= "local" pattern '=' expr-list "in" expr-list  "end"
+failwith-binding     ::= "failwith" expr
+raise-binding	     ::= "raise" expr
+assign-binding       ::= long-identifier "<-" expr
+try-binding	     ::= "try" expression-list "with" match-expression
+for-binding	     ::= "for" pattern "in" expression "do" expression-list "end"
+when-binding	     ::= "when" pattern "do" expression-list "end"
+while-binding	     ::= "while" pattern "do" expression-list "end"
+if-binding	     ::= "if" pattern "then" expression-list "else" expression-list "end"
+let-binding          ::= "let" [ "rec" ] pattern '=' expression-list [ "in" expression-list ]
+local-binding	     ::= "local" local-decls "in" expression-list "end"
 
-infix-decl           ::= "infix" [ decimal-digit ] [ identifier ] infix-operator
-                     | "infixr" [ decimal-digit ] [ identifier ] infix-operator
-                     | "nonfix" infix-operator
-
-match-expression     ::= "match" expr "with" match-clauses "end"
+match-expression     ::= "match" expression "with" match-clauses "end"
 match-clauses        ::= match-clause { '|' match-clause }
 match-clause         ::= pattern "->" expr
 
 function-expression  ::= "fun" pattern "->" expr
 
-## Syntactic Grammar Section::B. Type-related Non-terminals
+prefix-expression    ::= symb-identifier expression
 
-type-exp             ::= type-atom
-                     | type-atom "->" type-exp
-                     | basic-type
-                     | polymorphic-type type-exp
+infix-expression     ::= expression { infix-operator expression }
+
+## Syntactic Grammar Section::E -> Types
+
+constructor-list     ::= constructor { '|' constructor }
+constructor          ::= con-identifier "of" type-expression
+
+type-expression      ::= type-atom
+                     | type-atom "->" type-expression
+                     | polymorphic-type type-expression
                      | tuple-type
 
-tuple-type           ::= type-exp { '*' type-exp }
+tuple-type           ::= type-expression { '*' type-expression }
 
 type-atom            ::= alnum-identifier
-                     | '(' type-exp ')'
+                     | '(' type-expression ')'
                      | type-atom alnum-identifier
-                     | record-type
+		     | basic-type
 
-polymorphic-type     ::= "'" alnum-identifier
+polymorphic-type     ::= '`' alnum-identifier
 
-## Syntactic Grammar Section::C. Record-related Non-terminals
+## Syntactic Grammar Section::F -> Records
 
 record-type          ::= '{' field-list '}'
-field-list           ::= field { ',' field }
-field                ::= alnum-identifier ':' type-exp
+field-list           ::= field { ';' field }
+field                ::= alnum-identifier ':' type-expression
 
 record-literal       ::= '{' field-bindings '}'
 field-bindings       ::= field-binding { ',' field-binding }
 field-binding        ::= alnum-identifier '=' expr
 
-## Syntactic Grammar Section::D. Pattern-related Syntactic Non-terminals
+## Syntactic Grammar Section::G -> Patterns
 
 pattern              ::= pattern-constructor
                      | identifier-pattern
@@ -103,51 +131,31 @@ pattern              ::= pattern-constructor
                      | list-pattern
 		     | inductive-pattern
                      | '(' pattern-list ')'
-                     | record-pattern
 		     | unit-pattern
-		     | restriction-pattern
+		     | tuple-pattern
 
-unit-pattern	     ::= "()"
 
 pattern-constructor  ::= con-identifier pattern-list
 
+unit-pattern	     ::= "()"
+
 pattern-list         ::= pattern-single { '|' pattern-single }
-pattern-single       ::= identifier infix-expr
+pattern-single       ::= identifier infix-expression
                      | list-pattern
 
 tuple-pattern	     ::= '(' type-xpr  { "::" type-xpr } ')'
 
-list-pattern	     ::= '[' type-expr { "::" type-exp } ']'
+list-pattern	     ::= '[' type-expressionression { "::" type-expression } ']'
 
-record-pattern       ::= '{' field-patterns | field-merge '}'
-field-merge          ::= long-identifier '|' field-patterns
-field-patterns       ::= field-pattern { ',' field-pattern }
-field-pattern        ::= alnum-identifier '=' pattern
-
-restriction-pattern  ::= '(' identifier ':' type-exp ')'
-
+tuple-pattern 	     ::= '(' identifier ':' type-expression ')'
 inductive-pattern    ::= identifier { "::" identifier }
 
 identifier-pattern   ::= identifier { identifier }
 
-literal-pattern      ::= integer-literal
-                     | string-literal
-                     | character-literal
-
+literal-pattern      ::= literal-value
 wildcard-pattern     ::= '_'
 
-infix-expr           ::= primary-expr { infix-operator primary-expr }
-
-primary-expr         ::= identifier
-                     | literal-value
-                     | con-identifier primary-expr
-                     | '(' primary-expr ')'
-                     | prefix-operator primary-expr
-
-prefix-operator      ::= symb-identifier
-infix-operator       ::= [ "op" ] symb-identifier
-
-# Syntactic Grammar Section::E. The main non-terminals
+# Syntactic Grammar Section::E -> Literals & Identifiers
 
 identifier           ::= alnum-identifier
                      | symb-identifier
@@ -159,6 +167,7 @@ literal-value        ::= integer-literal
                      | float-literal
                      | list-literal
                      | tuple-literal
+		     | record-literal
 
 tuple-literal        ::= '(' literal-value { "::" literal-value } ')'
 
@@ -187,7 +196,9 @@ decimal-integer      ::= decimal-digit { decimal-digit }
 
 # The Lexical Grammar
 
-## Lexical Grammar Section::A. Non-terminals for fundemental elements
+## Lexical Grammar Section::A -> Fundementals
+
+infix-operator	     ::= symb-identifer
 
 long-identifier      ::= alnum-identifier { '.' alnum-identifier }
 symb-identifier      ::= ( punctuation | letter ) { punctuation | letter | digit }
@@ -212,13 +223,9 @@ octal-digit          ::= '0' | '1' | ... | '7'
 hexadecimal-digit    ::= decimal-digit | 'A' | ... | 'F' | 'a' | ... | 'f'
 decimal-digit        ::= '0' | '1' | ... | '8' | '9'
 
-punctuation          ::= '!' | '"' | '#' | '$'
-                     | '%' | '&' | ''' | '(' | ')'
-                     | '*' | '+' | ',' | '-' | '.'
-                     | '/' | ':' | ';' | '<' | '='
-                     | '>' | '?' | '@' | '[' | '\'
-                     | ']' | '^' | '_' | '`' | '{'
-                     | '|' | '}' | '~'
+punctuation          ::= '!' | '#' | '$' | '+' | '-' | '*' 
+		     | '%' | '~' | '`' | '/' | '@' | '&' | '^' 
+ 
 
 letter               ::= lower-case | upper-case
 lower-case           ::= 'a' | 'b' | ... | 'y' | 'z'
@@ -237,11 +244,31 @@ basic-type           ::= "int"
 		     | "tuple"
 
 
-## Lexical Grammar Section::B. Descriptive captures
+## Lexical Grammar Section::B -> EBNF-only captures
 
 newline              ::= '\n'
 no-double-quote      ::= ? any-UTF8-character-except-double-quote ?
 no-newline           ::= ? any-UTF8-character-except-newline ?
 any-char             ::= ? any-UTF8-character ?
+
+## Lexical Grammar Appendix -> The Regular Expressions for Lexical Tokens
+
+
+regex::con-identifier 		<- ([A-Z][A-Za-z0-9_])+
+regex::alnum-identifier		<- [A-Za-z'_][A-Za-z0-9']*
+regex::symb-identifier		<- [-a-zA-Z'_]!#$+*%~`/@&^]+
+regex::binary-integer		<- [0-1]+'B'
+regex::octal-integer 		<- [0-7]+'O'
+regex::hexadecimal-integer      <- [a-fA-F0-9]+'H'
+regex::decimal-integer		<- [0-9]+
+regex::float-literal		<- [0-9]+'.'[0-9]+
+regex::string-literal		<- '"' [^"] '"'
+regex::character-literal	<- '#"' [^"]{2} '"'
+
+
+
+
+
+
 
 
