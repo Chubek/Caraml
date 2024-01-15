@@ -18,7 +18,7 @@
 
 caraml-program	     ::= { module | toplevel-decls | comment }
 
-module               ::= "module" alnum-identifier "where" toplevel-decls "end"
+module               ::= "module" alnum-identifier "where" [ "no-gc" ] toplevel-decls "end"
 
 ## Syntactic Grammar Section::B -> The Declarations
 

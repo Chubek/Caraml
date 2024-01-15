@@ -86,9 +86,11 @@ any_char        [^ \r\n\t]
 "do"                { column_number += yyleng; return DO; }
 "unit"              { column_number += yyleng; return TYPE_UNIT; }
 "bool"              { column_number += yyleng; return TYPE_BOOL; }
+"no-gc"		    { colomn_number += yyleng; return NO_GC; }
 "->"                { column_number += yyleng; return ARROW; }
 ";;"                { column_number += yyleng; return DOUBLE_SEMI; }
 "::"                { column_number += yyleng; return DOUBLE_COLON; }
+"()"		    { column_number += yyleng; return UNIT_LITERAL; }
 
 {alnum_ident}        { column_number += yyleng; YYSCPY; return ALNUM_IDENT; }
 {symb_ident}        { column_number += yyleng; YYSCPY; return SYMB_IDENT; }
