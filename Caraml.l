@@ -3,6 +3,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
+#include <sys/types.h>
+
+
+#alloc strdup_heap, strdup_alloc, strdup_realloc___UNUSED, strdup_dump
+#hashfunc lex_hash___UNUSED
+
+
+static char *heaply_strndup(char *string, size_t len) {
+	char *alloc = (char*)strdup_alloc(len + 1);
+	return memmove(&alloc[0], &string[0], len);
+}
+
+
+#define YYSCPY		yylval.string = heaply_strndup(&yytext[0], yyleng)
 
 #define MAX_FILES	512
 
@@ -81,19 +96,19 @@ any_char 	[^ \r\n]
 ";;"		    {  column_number += yyleng; return DOBULE_SEMI; }
 "::" 		    {  column_number += yyleng; return DOUBLE_COLON;}
 
-{alnum_ident}		{  column_number += yyleng; return ALNUM_IDENT;         }
-{symb_ident}		{  column_number += yyleng; return SYMB_IDENT;          }
-{con_ident}		{  column_number += yyleng; return CON_IDENT;           }
-{hex_digit}+            {  column_number += yyleng; return HEX_INTEGER; 	}
-{digit}+                {  column_number += yyleng; return DECIMAL_INTEGER; 	}
-({binary_digit})+"B" 	{  column_number += yyleng; return BINARY_INTEGER; 	}
-({oct_digit})+"O"       {  column_number += yyleng; return OCTAL_INTEGER; 	}
-{hex_digit}+"H"     	{  column_number += yyleng; return HEXADECIMAL_INTEGER; }
+{alnum_ident}		{  column_number += yyleng; YYSCPY; return ALNUM_IDENT;          }
+{symb_ident}		{  column_number += yyleng; YYSCPY; return SYMB_IDENT;           }
+{con_ident}		{  column_number += yyleng; YYSCPY; return CON_IDENT;            }
+{hex_digit}+            {  column_number += yyleng; YYSCPY; return HEX_INTEGER; 	 }
+{digit}+                {  column_number += yyleng; YYSCPY; return DECIMAL_INTEGER; 	 }
+({binary_digit})+"B" 	{  column_number += yyleng; YYSCPY; return BINARY_INTEGER; 	 }
+({oct_digit})+"O"       {  column_number += yyleng; YYSCPY; return OCTAL_INTEGER; 	 }
+{hex_digit}+"H"     	{  column_number += yyleng; YYSCPY; return HEXADECIMAL_INTEGER;  }
 
-{digit}+"."{digit}+	{  column_number += yyleng; return FLOAT_LITERAL;	}
+{digit}+"."{digit}+	{  column_number += yyleng; YYSCPY; return FLOAT_LITERAL;	 }
 
-["]([^"]+)["]		{  column_number += yyleng; return STRING_LITERAL;	}
-"#\""([^"]{1,2})["]	{  column_number += yyleng; return CHARACTER_LITERAL;	}
+["]([^"]+)["]		{  column_number += yyleng; YYSCPY; return STRING_LITERAL;	 }
+"#\""([^"]{1,2})["]	{  column_number += yyleng; YYSCPY; return CHARACTER_LITERAL;	 }
 
 {blank}+		{  column_number += yyleng; 			}
 {newline}+              {  line_number += yyleng; column_number = 0;    }
